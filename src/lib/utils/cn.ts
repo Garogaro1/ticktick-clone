@@ -1,10 +1,16 @@
-import { type ClassValue, clsx } from "clsx";
+import { type ClassValue, clsx } from 'clsx';
 
 /**
- * Merge Tailwind CSS classes without conflicts
- * @param inputs - Class names to merge
- * @returns Merged class string
+ * Combines class names using clsx.
+ * Filters out falsy values and merges Tailwind classes.
+ *
+ * @param inputs - Class names to combine
+ * @returns Combined class string
+ *
+ * @example
+ * cn('px-4', isActive && 'bg-primary', 'text-white')
+ * // Returns: 'px-4 bg-primary text-white' (if isActive is true)
  */
 export function cn(...inputs: ClassValue[]): string {
-  return clsx(inputs);
+  return clsx(...inputs);
 }
