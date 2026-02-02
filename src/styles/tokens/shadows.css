@@ -1,0 +1,25 @@
+/**
+ * Shadow Tokens
+ *
+ * Subtle shadows for elevation, following warm Claude aesthetic.
+ * No harsh blacks - shadows use warm gray tones.
+ */
+
+:root {
+  /* Shadow Base Color */
+  --shadow-color: 45, 42, 38; /* RGB values for --color-text-primary */
+
+  /* Elevation Shadows */
+  --shadow-xs: 0 1px 2px rgba(var(--shadow-color), 0.04);
+  --shadow-sm: 0 1px 3px rgba(var(--shadow-color), 0.08), 0 1px 2px rgba(var(--shadow-color), 0.04);
+  --shadow-md: 0 4px 6px rgba(var(--shadow-color), 0.08), 0 2px 4px rgba(var(--shadow-color), 0.04);
+  --shadow-lg: 0 10px 15px rgba(var(--shadow-color), 0.08), 0 4px 6px rgba(var(--shadow-color), 0.04);
+  --shadow-xl: 0 20px 25px rgba(var(--shadow-color), 0.08), 0 8px 10px rgba(var(--shadow-color), 0.04);
+
+  /* Interactive Shadows */
+  --shadow-focus: 0 0 0 3px rgba(217, 119, 87, 0.25);
+  --shadow-focus-error: 0 0 0 3px rgba(201, 91, 91, 0.25);
+
+  /* Inner Shadow */
+  --shadow-inner: inset 0 2px 4px rgba(var(--shadow-color), 0.04);
+}

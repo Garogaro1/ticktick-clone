@@ -1,0 +1,45 @@
+/**
+ * Color Tokens - Warm Claude Theme
+ *
+ * A warm, minimalist color palette inspired by natural earth tones.
+ * No cold blues, no pure blacks - everything has warmth.
+ */
+
+:root {
+  /* Primary Colors - Terracotta Palette */
+  --color-primary: #D97757;
+  --color-primary-light: #E8B4A3;
+  --color-primary-dark: #A85B3F;
+
+  /* Background Colors - Warm Cream */
+  --color-bg-main: #FCFBF9;
+  --color-bg-secondary: #F5F3EF;
+  --color-bg-card: #FFFFFF;
+  --color-bg-elevated: #FFFFFF;
+
+  /* Text Colors - Warm Grays */
+  --color-text-primary: #2D2A26;
+  --color-text-secondary: #6B665F;
+  --color-text-tertiary: #9A958C;
+  --color-text-inverse: #FFFFFF;
+
+  /* Semantic Colors - Warm Variants */
+  --color-success: #5B8C6B;
+  --color-success-light: #A8C9B4;
+  --color-warning: #C9A560;
+  --color-warning-light: #E8D9A8;
+  --color-error: #C95B5B;
+  --color-error-light: #E8A8A8;
+  --color-info: #5B7C8C;
+  --color-info-light: #A8C4D4;
+
+  /* Border Colors */
+  --color-border-subtle: #E8E6E3;
+  --color-border-default: #D9D7D4;
+  --color-border-strong: #9A958C;
+
+  /* Interactive States */
+  --color-hover-overlay: rgba(45, 42, 38, 0.04);
+  --color-focus-ring: #D97757;
+  --color-disabled: #D9D7D4;
+}
