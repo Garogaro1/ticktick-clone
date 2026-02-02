@@ -1,0 +1,254 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// User model for authentication and account management
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  password      String? // For credential auth (Phase 3)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  tasks   Task[]
+  lists   List[]
+  tags    Tag[]
+  habits  Habit[]
+  goals   Goal[]
+  sessions PomodoroSession[]
+
+  @@index([email])
+  @@map("users")
+}
+
+// List model for organizing tasks (projects, folders)
+model List {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  icon        String?  // Emoji or icon identifier
+  color       String?  // Hex color code
+  sortOrder   Int      @default(0)
+  isDefault   Boolean  @default(false) // The "Inbox" list
+  isFavorite  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tasks Task[]
+
+  @@unique([userId, title])
+  @@index([userId])
+  @@index([userId, sortOrder])
+  @@map("lists")
+}
+
+// Tag model for categorizing tasks
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  color     String?  // Hex color code
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tasks TaskTag[]
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("tags")
+}
+
+// Task model - core entity
+model Task {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  status      TaskStatus @default(TODO)
+
+  // Priority levels
+  priority    Priority  @default(NONE)
+
+  // Dates
+  dueDate     DateTime?
+  startDate   DateTime?
+  completedAt DateTime?
+
+  // Time estimation
+  estimatedTime Int? // In minutes
+  spentTime     Int? // In minutes
+
+  // Recurrence (for Phase 18)
+  recurrenceRule String? // RRule format
+  recurrenceId   String? // ID of the parent recurring task
+
+  // Ordering
+  sortOrder Int @default(0)
+
+  // Meta
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  listId String
+  list   List   @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  // Self-referencing for subtasks
+  parentId String?
+  parent   Task?   @relation("TaskSubtask", fields: [parentId], references: [id], onDelete: Cascade)
+  subtasks Task[]  @relation("TaskSubtask")
+
+  tags TaskTag[]
+
+  @@index([userId])
+  @@index([listId])
+  @@index([userId, status])
+  @@index([userId, dueDate])
+  @@index([userId, priority])
+  @@index([parentId])
+  @@map("tasks")
+}
+
+// Join table for Task-Tag many-to-many relationship
+model TaskTag {
+  taskId String
+  tagId  String
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, tagId])
+  @@index([taskId])
+  @@index([tagId])
+  @@map("task_tags")
+}
+
+// Habit model for Phase 23
+model Habit {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  color       String?
+  icon        String?
+  frequency   String   @default("daily") // daily, weekly, monthly
+  targetCount Int      @default(1) // Target completions per frequency
+  sortOrder   Int      @default(0)
+  isArchived  Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  entries HabitEntry[]
+
+  @@index([userId])
+  @@index([userId, isArchived])
+  @@map("habits")
+}
+
+// Habit entry for tracking daily completions
+model HabitEntry {
+  id        String   @id @default(cuid())
+  date      DateTime
+  count     Int      @default(1)
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  habitId String
+  habit   Habit   @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+  @@unique([habitId, date])
+  @@index([habitId])
+  @@index([date])
+  @@map("habit_entries")
+}
+
+// Goal model for Phase 24
+model Goal {
+  id          String     @id @default(cuid())
+  title       String
+  description String?
+  targetValue Int?       // Numeric target (e.g., 100 tasks completed)
+  currentValue Int       @default(0)
+  unit        String?    // "tasks", "hours", etc.
+  deadline    DateTime?
+  status      GoalStatus @default(ACTIVE)
+  sortOrder   Int        @default(0)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, status])
+  @@map("goals")
+}
+
+// Pomodoro session for Phase 22
+model PomodoroSession {
+  id          String   @id @default(cuid())
+  duration    Int      // Duration in minutes (usually 25)
+  breakDuration Int    // Break duration in minutes (usually 5)
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  wasCompleted Boolean @default(false)
+  type        String   @default("work") // work, break
+
+  // Relations
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([startedAt])
+  @@map("pomodoro_sessions")
+}
+
+// Enums
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+  CANCELLED
+}
+
+enum Priority {
+  NONE
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum GoalStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  ABANDONED
+}

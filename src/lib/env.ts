@@ -61,6 +61,9 @@ export const env = {
 
     /** Port for the development server */
     port: optionalEnv('PORT', '3000'),
+
+    /** Database connection URL */
+    databaseUrl: validateEnv('DATABASE_URL', process.env.DATABASE_URL),
   },
 
   // Feature flags (can be overridden via environment)
@@ -92,6 +95,10 @@ export function validateEnvVars(): boolean {
   try {
     // Trigger validation by accessing all required variables
     validateEnv('NEXT_PUBLIC_APP_URL', process.env.NEXT_PUBLIC_APP_URL);
+    // Validate database URL on server side only
+    if (typeof window === 'undefined') {
+      validateEnv('DATABASE_URL', process.env.DATABASE_URL);
+    }
     return true;
   } catch (error) {
     if (error instanceof Error) {

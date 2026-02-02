@@ -48,5 +48,12 @@ next-env.d.ts
 .ralph/running.lock
 .ralph/loop.log
 
+# Prisma
+dev.db
+dev.db-journal
+prisma/*.db
+prisma/*.db-journal
+prisma/migrations/*/migration.sql
+
 # OS
 Thumbs.db
