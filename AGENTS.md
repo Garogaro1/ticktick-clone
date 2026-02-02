@@ -3,6 +3,7 @@
 ## Build Commands
 
 ### Development
+
 ```bash
 npm run dev          # Start development server (http://localhost:3000)
 npm run build        # Build for production
@@ -10,6 +11,7 @@ npm run start        # Start production server
 ```
 
 ### Code Quality
+
 ```bash
 npm run lint         # Run ESLint
 npm run lint:fix     # Fix lint issues automatically
@@ -18,6 +20,7 @@ npm run format        # Format code with Prettier
 ```
 
 ### Database
+
 ```bash
 npx prisma generate   # Generate Prisma client
 npx prisma migrate dev # Apply migrations (dev)
@@ -27,6 +30,7 @@ npx prisma db seed    # Seed database with sample data
 ```
 
 ### Testing
+
 ```bash
 npm test              # Run all tests
 npm test:watch        # Run tests in watch mode
@@ -72,6 +76,7 @@ src/
 ## Common Patterns
 
 ### Database Query
+
 ```typescript
 // Use Prisma from src/lib/db.ts
 import { db } from '@/lib/db';
@@ -79,6 +84,7 @@ const tasks = await db.task.findMany(...);
 ```
 
 ### Authentication
+
 ```typescript
 // Use auth helpers from src/lib/auth/
 import { getSession } from '@/lib/auth';
@@ -86,6 +92,7 @@ const session = await getSession();
 ```
 
 ### API Routes
+
 ```typescript
 // In app/api/...
 import { validateRequest } from '@/lib/api/validation';
@@ -104,9 +111,33 @@ import { validateRequest } from '@/lib/api/validation';
 - Use Next.js Image component for images
 - Use React.memo for expensive components
 
+## Available UI Components
+
+Always import from `@/components/ui`:
+
+- Button - variants: primary, secondary, outline, ghost
+- Card - card container
+- Input - text input
+- Modal - dialog component
+- Spinner - loading indicator (size: sm, md, lg)
+- Skeleton - loading placeholder (variant: rectangular, circular, text)
+- SkeletonCard - card-shaped loading placeholder
+- SkeletonList - list-shaped loading placeholder
+
+## Environment Variables
+
+Import from `@/lib/env`:
+
+- `env.public.appUrl` - Base URL of the application
+- `env.server.nodeEnv` - Node environment
+- `env.features.analytics` - Feature flag for analytics
+- `env.features.debug` - Feature flag for debug mode
+- `isDevelopment()`, `isProduction()`, `isTest()` helpers
+
 ## Design System
 
 All UI MUST follow the warm, minimalist Claude Code style:
+
 - Colors: See docs/DESIGN_RULES_CLAUDE_STYLE.md
 - No pure black (#000000) - use #2D2A26
 - No cold blue - use warm terracotta (#D97757)
