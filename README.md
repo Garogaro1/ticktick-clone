@@ -103,6 +103,71 @@ This project uses Ralph Wiggum for autonomous development. See `CLAUDE.md` for d
 ./ralph-loop.sh build
 ```
 
+## Deployment
+
+### Vercel (Recommended)
+
+This project is optimized for Vercel deployment.
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Login to Vercel
+vercel login
+
+# Deploy to preview
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
+**Environment Variables**
+
+Configure these in your Vercel project settings:
+
+```bash
+# Required
+NEXT_PUBLIC_APP_URL=https://your-domain.com
+
+# Optional Features
+NEXT_PUBLIC_ANALYTICS_ENABLED=true
+NEXT_PUBLIC_DEBUG=false
+
+# Phase 2+ (Database)
+DATABASE_URL=postgresql://...
+
+# Phase 3+ (Authentication)
+NEXTAUTH_SECRET=your-secret-here
+NEXTAUTH_URL=https://your-domain.com
+
+# Optional (Error Tracking)
+SENTRY_DSN=your-sentry-dsn
+SENTRY_AUTH_TOKEN=your-auth-token
+```
+
+**Generate NEXTAUTH_SECRET:**
+
+```bash
+openssl rand -base64 32
+```
+
+### Other Platforms
+
+The project can be deployed to any platform supporting Next.js:
+
+- **Netlify:** Use `npm run build` as build command
+- **Railway/Render:** Connect repository and configure environment variables
+- **Self-hosted:** Run `npm run build` then `npm run start`
+
+## Documentation
+
+- [Component Library](docs/COMPONENT_LIBRARY.md) - UI components and usage
+- [Analytics Events](docs/analytics-events.md) - Analytics tracking guide
+- [Design Rules](docs/DESIGN_RULES_CLAUDE_STYLE.md) - Design system
+- [Implementation Plan](IMPLEMENTATION_PLAN.md) - Development roadmap
+
 ## Contributing
 
 1. Create a feature branch

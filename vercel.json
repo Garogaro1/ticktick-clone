@@ -1,0 +1,132 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build",
+  "devCommand": "npm run dev",
+  "installCommand": "npm install",
+  "outputDirectory": ".next",
+  "regions": ["iad1"],
+  "functions": {
+    "app/**/*.{js,ts,jsx,tsx}": {
+      "memory": 1024,
+      "maxDuration": 10
+    },
+    "pages/api/**/*.{js,ts}": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  },
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "DENY"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "s-maxage=60, stale-while-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).\\.(jpg|jpeg|png|gif|ico|svg|webp|avif)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/(.*).\\.(js|css)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
+    }
+  ],
+  "crons": [],
+  "env": {
+    "NEXT_PUBLIC_APP_URL": {
+      "description": "Public URL of the application (e.g., https://your-domain.vercel.app)",
+      "value": "@app-url",
+      "required": true
+    },
+    "NEXT_PUBLIC_ANALYTICS_ENABLED": {
+      "description": "Enable analytics tracking (true/false)",
+      "value": "false",
+      "required": false
+    },
+    "NEXT_PUBLIC_DEBUG": {
+      "description": "Enable debug mode for development (true/false)",
+      "value": "false",
+      "required": false
+    },
+    "NEXTAUTH_SECRET": {
+      "description": "Secret key for NextAuth.js authentication (generate with: openssl rand -base64 32)",
+      "required": false
+    },
+    "NEXTAUTH_URL": {
+      "description": "URL for NextAuth.js authentication",
+      "value": "@app-url",
+      "required": false
+    },
+    "DATABASE_URL": {
+      "description": "PostgreSQL database connection string (for Phase 2)",
+      "required": false
+    },
+    "SENTRY_DSN": {
+      "description": "Sentry DSN for error tracking (optional)",
+      "required": false
+    },
+    "SENTRY_AUTH_TOKEN": {
+      "description": "Sentry authentication token (optional)",
+      "required": false
+    }
+  },
+  "build": {
+    "env": {
+      "NEXT_PUBLIC_APP_URL": "@app-url",
+      "NEXT_PUBLIC_ANALYTICS_ENABLED": "@next_public_analytics_enabled",
+      "NEXT_PUBLIC_DEBUG": "@next_public_debug"
+    }
+  }
+}

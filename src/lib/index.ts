@@ -1,2 +1,3 @@
 // Main library export file
-export * from "./utils";
+export * from './analytics';
+export * from './utils';
