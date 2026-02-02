@@ -41,10 +41,10 @@ function getPrismaClientOptions() {
 function createPrismaClient(): PrismaClient {
   if (process.env.NODE_ENV === 'development') {
     // Reuse the client in development to avoid connection pool exhaustion
-    if (!global.prisma) {
-      global.prisma = new PrismaClient(getPrismaClientOptions());
+    if (!globalThis.prisma) {
+      globalThis.prisma = new PrismaClient(getPrismaClientOptions());
     }
-    return global.prisma;
+    return globalThis.prisma;
   }
 
   // In production, create a new instance
