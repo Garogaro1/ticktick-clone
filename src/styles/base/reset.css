@@ -1,0 +1,15 @@
+/**
+ * CSS Reset
+ *
+ * Modern CSS reset for consistent cross-browser styling.
+ * Based on modern reset best practices.
+ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
