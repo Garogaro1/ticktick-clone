@@ -3,25 +3,32 @@
 import { useState, useMemo } from 'react';
 import { useTasks } from '@/hooks/useTasks';
 import { useCalendar } from '@/hooks/useCalendar';
-import { MonthCalendar } from '@/components/calendar';
+import {
+  MonthCalendar,
+  DayCalendar,
+  WeekCalendar,
+  ViewSwitcher,
+  CalendarHeader,
+} from '@/components/calendar';
 import { TaskDetailModal } from '@/components/tasks/TaskDetailModal';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
 import type { CalendarEvent } from '@/lib/calendar/types';
 import type { TaskDto } from '@/lib/tasks/types';
 import { formatDateFull } from '@/lib/utils/date';
-import { cn } from '@/lib/utils';
 
 /**
- * Calendar Page - Monthly view of tasks with date-based navigation.
+ * Calendar Page - Multi-view calendar with task display.
  *
  * Features:
- * - Monthly calendar grid with task display
- * - Navigate between months
- * - Click date to add task
+ * - Month, week, and day views
+ * - Navigate between time periods
+ * - Click date/time slot to add task
  * - Click task to edit details
  * - Go to today button
- * - Drag tasks to change dates (with @dnd-kit)
+ * - View switcher for changing views
+ * - Today indicator in time views
  * - Warm Claude theme styling
  */
 export default function CalendarPage() {
@@ -34,11 +41,15 @@ export default function CalendarPage() {
 
   // Calendar state
   const {
-    currentMonth,
+    currentDate,
+    view,
     selectedDate,
     monthViewData,
-    goToPreviousMonth,
-    goToNextMonth,
+    weekViewData,
+    dayViewData,
+    setView,
+    goToPrevious,
+    goToNext,
     goToToday,
     selectDate,
     clearSelection,
@@ -51,10 +62,11 @@ export default function CalendarPage() {
   const [selectedTask, setSelectedTask] = useState<TaskDto | null>(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
 
-  // Add task modal state (for date click)
+  // Add task modal state (for date/time click)
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDate, setNewTaskDate] = useState('');
+  const [newTaskTime, setNewTaskTime] = useState('');
   const [isAdding, setIsAdding] = useState(false);
 
   // Handle task drop (drag and drop to reschedule)
@@ -63,18 +75,37 @@ export default function CalendarPage() {
     await updateTask(taskId, { dueDate: newDate });
   };
 
-  // Format month for title
-  const monthTitle = useMemo(() => {
-    if (!currentMonth) return '';
-    return formatDateFull(currentMonth);
-  }, [currentMonth]);
+  // Format title based on view
+  const viewTitle = useMemo(() => {
+    if (!currentDate) return '';
+    return formatDateFull(currentDate);
+  }, [currentDate]);
 
   // Handle date click - open add task modal
   const handleDateClick = (date: Date) => {
     selectDate(date);
     setNewTaskDate(date.toISOString().split('T')[0]);
+    setNewTaskTime('');
     setNewTaskTitle('');
     setIsAddModalOpen(true);
+  };
+
+  // Handle time slot click - open add task modal with time
+  const handleTimeSlotClick = (date: Date, hour: number, minute: number) => {
+    selectDate(date);
+    setNewTaskDate(date.toISOString().split('T')[0]);
+    // Format time as HH:MM
+    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+    setNewTaskTime(timeStr);
+    setNewTaskTitle('');
+    setIsAddModalOpen(true);
+  };
+
+  // Handle time slot click for day view (hour only)
+  const handleDayTimeSlotClick = (hour: number, minute: number) => {
+    if (currentDate) {
+      handleTimeSlotClick(currentDate, hour, minute);
+    }
   };
 
   // Handle task click - open edit modal
@@ -93,8 +124,15 @@ export default function CalendarPage() {
     setIsAdding(true);
     try {
       const dueDate = new Date(newTaskDate);
-      // Set time to noon to avoid timezone issues
-      dueDate.setHours(12, 0, 0, 0);
+
+      // If time is specified, set it
+      if (newTaskTime) {
+        const [hours, minutes] = newTaskTime.split(':').map(Number);
+        dueDate.setHours(hours, minutes, 0, 0);
+      } else {
+        // Set time to noon to avoid timezone issues
+        dueDate.setHours(12, 0, 0, 0);
+      }
 
       const result = await addTask(newTaskTitle, '');
 
@@ -105,6 +143,7 @@ export default function CalendarPage() {
         setIsAddModalOpen(false);
         setNewTaskTitle('');
         setNewTaskDate('');
+        setNewTaskTime('');
         clearSelection();
       }
     } catch (err) {
@@ -131,6 +170,7 @@ export default function CalendarPage() {
     setIsAddModalOpen(false);
     setNewTaskTitle('');
     setNewTaskDate('');
+    setNewTaskTime('');
     clearSelection();
   };
 
@@ -195,25 +235,63 @@ export default function CalendarPage() {
           </div>
         )}
 
+        {/* Calendar header with navigation and view switcher */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <CalendarHeader
+            currentMonth={currentDate}
+            onPreviousMonth={goToPrevious}
+            onNextMonth={goToNext}
+            onToday={goToToday}
+            title={viewTitle}
+          />
+          <ViewSwitcher currentView={view} onViewChange={setView} />
+        </div>
+
         {/* Loading state */}
-        {isLoading && !monthViewData && (
+        {isLoading && !monthViewData && !weekViewData && !dayViewData && (
           <div className="flex items-center justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         )}
 
-        {/* Calendar */}
-        {monthViewData && (
+        {/* Calendar views */}
+        {view === 'month' && monthViewData && (
           <MonthCalendar
             monthViewData={monthViewData}
             selectedDate={selectedDate}
-            onPreviousMonth={goToPreviousMonth}
-            onNextMonth={goToNextMonth}
+            onPreviousMonth={goToPrevious}
+            onNextMonth={goToNext}
             onToday={goToToday}
             onDateClick={handleDateClick}
             onTaskClick={handleTaskClick}
             onTaskDrop={handleTaskDrop}
-            title={monthTitle}
+            title={viewTitle}
+          />
+        )}
+
+        {view === 'week' && (
+          <WeekCalendar
+            weekViewData={weekViewData}
+            isLoading={isLoading}
+            error={error}
+            onTimeSlotClick={handleTimeSlotClick}
+            onEventClick={handleTaskClick}
+            startHour={6}
+            endHour={22}
+            hourHeight={50}
+          />
+        )}
+
+        {view === 'day' && (
+          <DayCalendar
+            dayViewData={dayViewData}
+            isLoading={isLoading}
+            error={error}
+            onTimeSlotClick={handleDayTimeSlotClick}
+            onEventClick={handleTaskClick}
+            startHour={6}
+            endHour={22}
+            hourHeight={60}
           />
         )}
 
@@ -300,28 +378,30 @@ export default function CalendarPage() {
                 onChange={(e) => setNewTaskDate(e.target.value)}
               />
             </div>
+
+            <div>
+              <label
+                htmlFor="task-time"
+                className="block text-sm font-medium text-text-secondary mb-2"
+              >
+                Due Time (optional)
+              </label>
+              <Input
+                id="task-time"
+                type="time"
+                value={newTaskTime}
+                onChange={(e) => setNewTaskTime(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="flex justify-end gap-3 mt-6">
-            <button
-              type="button"
-              onClick={handleCloseAddModal}
-              className="px-4 py-2 text-text-secondary hover:text-text-primary transition-colors"
-            >
+            <Button variant="ghost" onClick={handleCloseAddModal}>
               Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleAddTask}
-              disabled={!newTaskTitle.trim() || isAdding}
-              className={cn(
-                'px-4 py-2 bg-primary text-white rounded-lg font-medium',
-                'hover:bg-primary-dark transition-colors',
-                'disabled:opacity-50 disabled:cursor-not-allowed'
-              )}
-            >
+            </Button>
+            <Button onClick={handleAddTask} disabled={!newTaskTitle.trim() || isAdding}>
               {isAdding ? 'Adding...' : 'Add Task'}
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>

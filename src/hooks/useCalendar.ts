@@ -2,9 +2,22 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import type { TaskDto } from '@/lib/tasks/types';
-import type { MonthViewData, CalendarViewOptions } from '@/lib/calendar/types';
-import { generateMonthView } from '@/lib/calendar/events';
-import { addMonths, startOfMonth } from '@/lib/utils/date';
+import type {
+  MonthViewData,
+  WeekViewData,
+  DayViewData,
+  CalendarViewOptions,
+  CalendarViewType,
+} from '@/lib/calendar/types';
+import { generateMonthView, generateWeekView, generateDayView } from '@/lib/calendar/events';
+import {
+  addMonths,
+  addWeeks,
+  addDays,
+  startOfMonth,
+  startOfWeek,
+  startOfDay,
+} from '@/lib/utils/date';
 
 /**
  * Options for the useCalendar hook.
@@ -12,6 +25,8 @@ import { addMonths, startOfMonth } from '@/lib/utils/date';
 export interface UseCalendarOptions {
   /** Initial month (defaults to current month) */
   initialMonth?: Date;
+  /** Initial view type */
+  initialView?: CalendarViewType;
   /** Whether to include completed tasks */
   includeCompleted?: boolean;
   /** Start day of week (0 = Sunday, 1 = Monday) */
@@ -22,22 +37,30 @@ export interface UseCalendarOptions {
  * Result from the useCalendar hook.
  */
 export interface UseCalendarResult {
-  /** Current viewing month */
-  currentMonth: Date;
+  /** Current viewing date (reference for navigation) */
+  currentDate: Date;
+  /** Current view type */
+  view: CalendarViewType;
   /** Selected date */
   selectedDate: Date | null;
   /** Month view data */
   monthViewData: MonthViewData | null;
+  /** Week view data */
+  weekViewData: WeekViewData | null;
+  /** Day view data */
+  dayViewData: DayViewData | null;
   /** All tasks */
   tasks: TaskDto[];
   /** Whether data is loading */
   isLoading: boolean;
   /** Error message */
   error: string | null;
-  /** Go to previous month */
-  goToPreviousMonth: () => void;
-  /** Go to next month */
-  goToNextMonth: () => void;
+  /** Set view type */
+  setView: (view: CalendarViewType) => void;
+  /** Go to previous period */
+  goToPrevious: () => void;
+  /** Go to next period */
+  goToNext: () => void;
   /** Go to today */
   goToToday: () => void;
   /** Select a date */
@@ -80,15 +103,23 @@ function convertTaskDtoToCalendarTask(task: TaskDto) {
 /**
  * Hook for managing calendar state and navigation.
  *
- * Provides month view data generation, date navigation,
- * and task management for the calendar view.
+ * Provides view generation for month/week/day views,
+ * date navigation, and task management for the calendar.
  */
 export function useCalendar(tasks: TaskDto[], options: UseCalendarOptions = {}): UseCalendarResult {
-  const { initialMonth, includeCompleted = false, startOfWeek = 0 } = options;
+  const {
+    initialMonth,
+    initialView = 'month',
+    includeCompleted = false,
+    startOfWeek: startOfDayOfWeek = 0,
+  } = options;
 
-  const [currentMonth, setCurrentMonth] = useState<Date>(
-    initialMonth ? startOfMonth(initialMonth) : startOfMonth(new Date())
+  const today = new Date();
+
+  const [currentDate, setCurrentDate] = useState<Date>(
+    initialMonth ? startOfMonth(initialMonth) : startOfMonth(today)
   );
+  const [view, setView] = useState<CalendarViewType>(initialView);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [isLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,43 +130,96 @@ export function useCalendar(tasks: TaskDto[], options: UseCalendarOptions = {}):
     return tasks.length > 0 ? tasks : internalTasks;
   }, [tasks, internalTasks]);
 
+  // Calendar options for view generation
+  const calendarOptions: Partial<CalendarViewOptions> = useMemo(
+    () => ({
+      startOfWeek: startOfDayOfWeek,
+      includeCompleted,
+      selectedDate: selectedDate ?? undefined,
+    }),
+    [startOfDayOfWeek, includeCompleted, selectedDate]
+  );
+
   // Generate month view data
   const monthViewData = useMemo(() => {
-    if (syncedTasks.length === 0) {
+    if (syncedTasks.length === 0 || view !== 'month') {
       return null;
     }
 
     try {
       const calendarTasks = syncedTasks.map(convertTaskDtoToCalendarTask);
-      const calendarOptions: Partial<CalendarViewOptions> = {
-        startOfWeek,
-        includeCompleted,
-        selectedDate: selectedDate ?? undefined,
-      };
-
-      return generateMonthView(calendarTasks, currentMonth, calendarOptions);
+      return generateMonthView(calendarTasks, currentDate, calendarOptions);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate calendar view');
+      setError(err instanceof Error ? err.message : 'Failed to generate month view');
       return null;
     }
-  }, [syncedTasks, currentMonth, selectedDate, startOfWeek, includeCompleted]);
+  }, [syncedTasks, currentDate, calendarOptions, view]);
+
+  // Generate week view data
+  const weekViewData = useMemo(() => {
+    if (syncedTasks.length === 0 || view !== 'week') {
+      return null;
+    }
+
+    try {
+      const calendarTasks = syncedTasks.map(convertTaskDtoToCalendarTask);
+      return generateWeekView(calendarTasks, currentDate, calendarOptions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate week view');
+      return null;
+    }
+  }, [syncedTasks, currentDate, calendarOptions, view]);
+
+  // Generate day view data
+  const dayViewData = useMemo(() => {
+    if (syncedTasks.length === 0 || view !== 'day') {
+      return null;
+    }
+
+    try {
+      const calendarTasks = syncedTasks.map(convertTaskDtoToCalendarTask);
+      return generateDayView(calendarTasks, currentDate, calendarOptions);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate day view');
+      return null;
+    }
+  }, [syncedTasks, currentDate, calendarOptions, view]);
 
   // Navigation functions
-  const goToPreviousMonth = useCallback(() => {
-    setCurrentMonth((prev) => startOfMonth(addMonths(prev, -1)));
+  const goToPrevious = useCallback(() => {
     setError(null);
-  }, []);
+    switch (view) {
+      case 'month':
+        setCurrentDate((prev) => startOfMonth(addMonths(prev, -1)));
+        break;
+      case 'week':
+        setCurrentDate((prev) => startOfWeek(addWeeks(prev, -1), startOfDayOfWeek));
+        break;
+      case 'day':
+        setCurrentDate((prev) => startOfDay(addDays(prev, -1)));
+        break;
+    }
+  }, [view, startOfDayOfWeek]);
 
-  const goToNextMonth = useCallback(() => {
-    setCurrentMonth((prev) => startOfMonth(addMonths(prev, 1)));
+  const goToNext = useCallback(() => {
     setError(null);
-  }, []);
+    switch (view) {
+      case 'month':
+        setCurrentDate((prev) => startOfMonth(addMonths(prev, 1)));
+        break;
+      case 'week':
+        setCurrentDate((prev) => startOfWeek(addWeeks(prev, 1), startOfDayOfWeek));
+        break;
+      case 'day':
+        setCurrentDate((prev) => startOfDay(addDays(prev, 1)));
+        break;
+    }
+  }, [view, startOfDayOfWeek]);
 
   const goToToday = useCallback(() => {
-    const today = new Date();
-    setCurrentMonth(startOfMonth(today));
-    setSelectedDate(today);
     setError(null);
+    setCurrentDate(today);
+    setSelectedDate(today);
   }, []);
 
   const selectDate = useCallback((date: Date) => {
@@ -152,14 +236,18 @@ export function useCalendar(tasks: TaskDto[], options: UseCalendarOptions = {}):
   }, []);
 
   return {
-    currentMonth,
+    currentDate,
+    view,
     selectedDate,
     monthViewData,
+    weekViewData,
+    dayViewData,
     tasks: syncedTasks,
     isLoading,
     error,
-    goToPreviousMonth,
-    goToNextMonth,
+    setView,
+    goToPrevious,
+    goToNext,
     goToToday,
     selectDate,
     clearSelection,
