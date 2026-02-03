@@ -6,6 +6,12 @@ import { cn } from '@/lib/utils';
 import { TagBadge } from '@/components/tags';
 import type { TaskDto } from '@/lib/tasks/types';
 
+export interface DragHandleProps {
+  attributes: React.HTMLAttributes<HTMLElement>;
+  listeners?: React.HTMLAttributes<HTMLElement>;
+  isDragging: boolean;
+}
+
 export interface TaskItemProps {
   task: TaskDto;
   onUpdate?: (
@@ -14,6 +20,7 @@ export interface TaskItemProps {
   ) => Promise<boolean>;
   onDelete?: (id: string) => void;
   onEdit?: (task: TaskDto) => void;
+  dragHandleProps?: DragHandleProps;
   isLoading?: boolean;
   className?: string;
 }
@@ -29,6 +36,7 @@ const priorityConfig: Record<Priority, { color: string; label: string }> = {
  * TaskItem component for displaying a single task.
  *
  * Features:
+ * - Optional drag handle for reordering
  * - Checkbox with smooth animation
  * - Inline title editing
  * - Priority indicator
@@ -42,6 +50,7 @@ export function TaskItem({
   onUpdate,
   onDelete,
   onEdit,
+  dragHandleProps,
   isLoading = false,
   className,
 }: TaskItemProps) {
@@ -141,10 +150,42 @@ export function TaskItem({
         isInactive && 'opacity-60 bg-background-secondary',
         isOverdue && 'border-error/30 bg-error/5',
         isLoading && 'opacity-50 pointer-events-none',
+        dragHandleProps?.isDragging && 'opacity-50 shadow-md',
         className
       )}
       onClick={handleClick}
     >
+      {/* Drag handle */}
+      {dragHandleProps && (
+        <button
+          {...dragHandleProps.attributes}
+          {...dragHandleProps.listeners}
+          className={cn(
+            'flex-shrink-0 p-1 text-text-tertiary hover:text-text-primary cursor-grab active:cursor-grabbing rounded transition-colors',
+            'hover:bg-background-secondary'
+          )}
+          aria-label="Drag to reorder"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="9" cy="12" r="1" />
+            <circle cx="9" cy="5" r="1" />
+            <circle cx="9" cy="19" r="1" />
+            <circle cx="15" cy="12" r="1" />
+            <circle cx="15" cy="5" r="1" />
+            <circle cx="15" cy="19" r="1" />
+          </svg>
+        </button>
+      )}
+
       {/* Checkbox */}
       <button
         onClick={handleStatusToggle}

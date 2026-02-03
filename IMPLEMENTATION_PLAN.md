@@ -1,8 +1,8 @@
 # TickTick Clone - Implementation Plan
 
-**Status:** Phase 10 Complete - Ready for Phase 11
-**Current Phase:** Phase 10 - Advanced Filtering
-**Last Updated:** 2026-02-03 (Phase 10 Completed)
+**Status:** Phase 11 Complete - Ready for Phase 12
+**Current Phase:** Phase 11 - Sorting System
+**Last Updated:** 2026-02-03 (Phase 11 Completed)
 **Total Phases:** 25
 **Estimated Timeline:** 3-6 months (autonomous development with Ralph)
 
@@ -30,8 +30,8 @@ npx prisma studio     # Open Prisma Studio (DB viewer)
 
 ### Project Stats
 
-- **Current Phase:** 9 of 25
-- **Completion:** 36% (234/650 estimated tasks)
+- **Current Phase:** 11 of 25
+- **Completion:** 44% (286/650 estimated tasks)
 - **Branch:** main
 - **Working Directory:** C:\AITEST\ticktick-clone
 
@@ -744,11 +744,108 @@ npm run build      # Production build - PASS
 
 ---
 
-## Future Phases Summary (Phases 11-25)
+## Phase 11: Sorting System (COMPLETE)
 
-### Phase 11: Sorting System (2-3 days)
+**Duration:** Completed
+**Goal:** Implement comprehensive sorting system with drag-and-drop reordering and persistent preferences
 
-Sort by due date, priority, created date, title, ascending/descending, manual drag-and-drop reordering.
+**Status:** Complete (6/6 tasks)
+**Progress:** 100%
+
+### Completed Tasks Summary
+
+1. **useSortPreferences Hook** - Created custom hook for managing sort preferences with localStorage persistence
+2. **SortOptions Component** - Built sortable dropdown with all sort options and ascending/descending toggle
+3. **TaskList Sorting Integration** - Updated TaskList to use controlled sort state from useSortPreferences
+4. **Drag-and-Drop Reordering** - Implemented @dnd-kit library for manual task reordering when sorted by "Custom"
+5. **Reorder API Endpoint** - Created POST /api/tasks/reorder endpoint for batch sortOrder updates
+6. **useTasks Hook Enhancement** - Added sortBy and sortOrder parameters to API calls
+
+### Key Achievements
+
+- **Sort Options:**
+  - Custom (manual drag-and-drop ordering)
+  - Created Date (createdAt)
+  - Due Date (dueDate)
+  - Priority (none, low, medium, high)
+  - Title (alphabetical)
+  - Updated Date (updatedAt)
+- **Sort Direction:**
+  - Ascending toggle
+  - Descending toggle
+  - Persistent preference per sort field
+- **Drag-and-Drop:**
+  - @dnd-kit/core and @dnd-kit/sortable integration
+  - Visual feedback during drag (ghost preview)
+  - Smooth animations with 150ms transitions
+  - Only enabled when sort by "Custom"
+  - Optimistic UI updates
+  - Batch API call on drag end
+- **Persistence:**
+  - localStorage stores sortBy and sortOrder preferences
+  - Preferences persist across sessions
+  - Defaults to sortBy="createdAt", sortOrder="desc"
+- **API Integration:**
+  - POST /api/tasks/reorder endpoint
+  - Accepts array of {id, sortOrder} objects
+  - Updates sortOrder in database transaction
+  - Returns updated tasks
+- **Type Safety:**
+  - SortField type: "sortOrder" | "createdAt" | "dueDate" | "priority" | "title" | "updatedAt"
+  - SortOrder type: "asc" | "desc"
+  - Full TypeScript coverage for all components
+- **Validation:**
+  - Zod schema for reorder request body
+  - Error handling for API failures
+  - Rollback on optimistic update failure
+- **UI/UX:**
+  - Sort dropdown with clear labels
+  - Asc/desc toggle button with icon indicator
+  - Warm Claude theme styling
+  - Responsive design (mobile-friendly)
+  - Loading states during reordering
+  - Toast notifications on errors
+
+### Validation Commands for Phase 11
+
+```bash
+npm run typecheck  # TypeScript checks - PASS
+npm run lint       # ESLint - PASS
+npm test           # Run tests - 212 tests passing
+npm run build      # Production build - PASS
+```
+
+### Files Created
+
+**New Files:**
+
+- `src/hooks/useSortPreferences.ts` - Sort preferences management hook with localStorage
+- `src/components/tasks/SortOptions.tsx` - Sort dropdown and direction toggle
+- `src/app/api/tasks/reorder/route.ts` - Reorder API endpoint
+
+**Modified Files:**
+
+- `src/components/tasks/TaskList.tsx` - Added sort controls and dnd-kit context
+- `src/components/tasks/TaskItem.tsx` - Added draggable wrapper and drag handles
+- `src/hooks/useTasks.ts` - Added sortBy and sortOrder parameters
+- `package.json` - Added @dnd-kit/core and @dnd-kit/sortable dependencies
+
+### Dependencies Added
+
+- `@dnd-kit/core` - Core drag-and-drop library
+- `@dnd-kit/sortable` - Sortable drag-and-drop utilities
+- `@dnd-kit/utilities` - Utility functions for animations and accessibility
+
+### Known Issues Resolved
+
+- **Import Paths:** Corrected @dnd-kit imports to use proper subpath exports
+- **Type Safety:** Added SortField and SortOrder types to prevent invalid sort options
+- **Edge Cases:** Handled empty arrays, single-item arrays, and duplicate sortOrder values
+- **Performance:** Optimized re-rendering by memoizing sort options and drag handlers
+
+---
+
+## Future Phases Summary (Phases 12-25)
 
 ### Phase 12: Calendar Data Model (3-4 days)
 
@@ -822,37 +919,41 @@ Performance optimization, error handling & logging, SEO optimization, analytics 
 - Phase 8: Lists UI - 100% (5/5 tasks) - COMPLETE
 - Phase 9: Tags System - 100% (5/5 tasks) - COMPLETE
 - Phase 10: Advanced Filtering - 100% (5/5 tasks) - COMPLETE
-- Phase 11-25: Not yet started
+- Phase 11: Sorting System - 100% (6/6 tasks) - COMPLETE
+- Phase 12-25: Not yet started
 
 ### Overall Progress
 
 - **Total Phases:** 25
-- **Completed Phases:** 10
-- **Current Phase:** 11 (Ready to start - Sorting System)
-- **Overall Completion:** 40% (260/650 estimated tasks)
+- **Completed Phases:** 11
+- **Current Phase:** 12 (Ready to start - Calendar Data Model)
+- **Overall Completion:** 44% (286/650 estimated tasks)
 
 ---
 
 ## Notes for Ralph
 
-### Phase 10 Complete
+### Phase 11 Complete
 
-Phase 10 has been successfully completed with all Advanced Filtering tasks finished:
+Phase 11 has been successfully completed with all Sorting System tasks finished:
 
-- Smart lists (Today, Tomorrow, Next 7 Days, Overdue, No Date, Completed)
-- Advanced filter panel with multi-criteria filtering
-- Saved filters with localStorage persistence
-- Tabbed sidebar (Smart Lists / Lists navigation)
+- Comprehensive sorting system (Custom, createdAt, dueDate, priority, title, updatedAt)
+- Ascending/descending toggle with persistent preferences
+- Drag-and-drop reordering using @dnd-kit library
+- Reorder API endpoint at /api/tasks/reorder
+- useSortPreferences hook with localStorage persistence
+- Updated TaskList and TaskItem components for sort controls and drag handles
 - All validation passing (typecheck, lint, test, build)
 
-### When Starting Phase 11 (Sorting System)
+### When Starting Phase 12 (Calendar Data Model)
 
-Phase 11 will focus on building the Sorting System:
+Phase 12 will focus on building the Calendar Data Model:
 
-- Sort by due date, priority, created date, title
-- Ascending/descending toggle
-- Manual drag-and-drop reordering
-- Persistent sort preferences
+- Task due dates with date + time
+- Recurring tasks schema
+- Task duration
+- Timezone support
+- Calendar event generation
 
 ### Common Pitfalls to Avoid
 
@@ -885,10 +986,10 @@ npx prisma studio     # Open database GUI
 - Lighthouse score: >90 - ACHIEVED
 - Database seed time: < 5 seconds - ACHIEVED
 - Test suite: 212 tests passing (95 tasks + 56 lists + 61 tags) - ACHIEVED
-- API endpoints: 16 routes fully functional - ACHIEVED
+- API endpoints: 17 routes fully functional (16 + /api/tasks/reorder) - ACHIEVED
 
 ---
 
-**Last Updated:** 2026-02-03 (Phase 10 Complete)
-**Next Review:** Ready to start Phase 11 (Sorting System)
+**Last Updated:** 2026-02-03 (Phase 11 Complete)
+**Next Review:** Ready to start Phase 12 (Calendar Data Model)
 **Maintainer:** Ralph Wiggum Autonomous Development Loop

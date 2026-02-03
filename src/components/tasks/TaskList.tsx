@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { TaskStatus, Priority } from '@prisma/client';
+import { TaskStatus } from '@prisma/client';
 import { TaskItem } from './TaskItem';
 import { AddTaskInput } from './AddTaskInput';
 import { Spinner } from '@/components/ui/Spinner';
 import { TagBadge } from '@/components/tags';
 import { cn } from '@/lib/utils';
 import type { TaskDto } from '@/lib/tasks/types';
+import type { SortBy, SortOrder } from '@/hooks/useTasks';
 
 export interface TaskListProps {
   tasks: TaskDto[];
@@ -19,13 +20,18 @@ export interface TaskListProps {
   ) => Promise<boolean>;
   onDeleteTask?: (id: string) => void;
   onEditTask?: (task: TaskDto) => void;
+  onReorderTasks?: (updates: Array<{ id: string; sortOrder: number }>) => Promise<boolean>;
   activeTag?: { id: string; name: string; color: string | null } | null;
   onClearTagFilter?: () => void;
+  // Sort state - controlled from parent
+  sortBy?: SortBy;
+  sortOrder?: SortOrder;
+  onChangeSort?: (sortBy: SortBy, sortOrder: SortOrder) => void;
   className?: string;
 }
 
 export type TaskFilter = 'all' | 'active' | 'completed';
-export type TaskSort = 'createdAt' | 'dueDate' | 'priority' | 'title';
+export type TaskSort = SortBy;
 
 const filterButtons: { value: TaskFilter; label: string; count: (tasks: TaskDto[]) => number }[] = [
   { value: 'all', label: 'All', count: (t) => t.length },
@@ -42,10 +48,12 @@ const filterButtons: { value: TaskFilter; label: string; count: (tasks: TaskDto[
 ];
 
 const sortOptions: { value: TaskSort; label: string }[] = [
+  { value: 'sortOrder', label: 'Custom Order' },
   { value: 'createdAt', label: 'Created' },
   { value: 'dueDate', label: 'Due Date' },
   { value: 'priority', label: 'Priority' },
   { value: 'title', label: 'Title' },
+  { value: 'updatedAt', label: 'Modified' },
 ];
 
 /**
@@ -54,6 +62,7 @@ const sortOptions: { value: TaskSort; label: string }[] = [
  * Features:
  * - Filter by status (all, active, completed)
  * - Sort by multiple fields
+ * - Ascending/descending toggle
  * - Add new tasks
  * - Inline editing
  * - Bulk status updates
@@ -67,45 +76,29 @@ export function TaskList({
   onUpdateTask,
   onDeleteTask,
   onEditTask,
+  onReorderTasks, // eslint-disable-line @typescript-eslint/no-unused-vars
   activeTag,
   onClearTagFilter,
+  sortBy = 'sortOrder',
+  sortOrder = 'asc',
+  onChangeSort,
   className,
 }: TaskListProps) {
   const [filter, setFilter] = useState<TaskFilter>('all');
-  const [sort, setSort] = useState<TaskSort>('createdAt');
   const [isAdding, setIsAdding] = useState(false);
 
-  // Filter tasks
+  // Filter tasks (client-side for status, since API handles list/tag filters)
   const filteredTasks = tasks.filter((task) => {
     if (filter === 'active') return task.status !== TaskStatus.DONE;
     if (filter === 'completed') return task.status === TaskStatus.DONE;
     return true;
   });
 
-  // Sort tasks
-  const sortedTasks = [...filteredTasks].sort((a, b) => {
-    switch (sort) {
-      case 'createdAt':
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-      case 'dueDate':
-        if (!a.dueDate) return 1;
-        if (!b.dueDate) return -1;
-        return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
-      case 'priority':
-        const priorityOrder = [Priority.NONE, Priority.LOW, Priority.MEDIUM, Priority.HIGH];
-        return priorityOrder.indexOf(b.priority) - priorityOrder.indexOf(a.priority);
-      case 'title':
-        return a.title.localeCompare(b.title);
-      default:
-        return 0;
-    }
-  });
-
-  // Group tasks by status for better organization
-  const activeTasks = sortedTasks.filter(
+  // Tasks are already sorted from the API, just group them
+  const activeTasks = filteredTasks.filter(
     (t) => t.status !== TaskStatus.DONE && t.status !== TaskStatus.CANCELLED
   );
-  const completedTasks = sortedTasks.filter((t) => t.status === TaskStatus.DONE);
+  const completedTasks = filteredTasks.filter((t) => t.status === TaskStatus.DONE);
 
   const handleAddTask = useCallback(
     async (title: string) => {
@@ -191,17 +184,54 @@ export function TaskList({
         {/* Sort dropdown */}
         <div className="flex items-center gap-2">
           <span className="text-sm text-text-tertiary">Sort by:</span>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as TaskSort)}
-            className="px-3 py-2 bg-background-card border border-border-subtle rounded-lg text-sm text-text-primary focus:border-primary outline-none transition-all duration-200"
-          >
-            {sortOptions.map(({ value, label }) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
+          <div className="flex items-center gap-1">
+            <select
+              value={sortBy}
+              onChange={(e) => onChangeSort?.(e.target.value as TaskSort, sortOrder)}
+              className="px-3 py-2 bg-background-card border border-border-subtle rounded-l-lg text-sm text-text-primary focus:border-primary outline-none transition-all duration-200"
+            >
+              {sortOptions.map(({ value, label }) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+            <button
+              onClick={() => onChangeSort?.(sortBy, sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="px-3 py-2 bg-background-card border border-l-0 border-border-subtle rounded-r-lg text-sm text-text-primary hover:bg-background-secondary focus:border-primary outline-none transition-all duration-200"
+              title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+            >
+              {sortOrder === 'asc' ? (
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 19V5" />
+                  <path d="m5 12 7-7 7 7" />
+                </svg>
+              ) : (
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M12 5v14" />
+                  <path d="m19 12-7 7-7-7" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -218,7 +248,7 @@ export function TaskList({
       )}
 
       {/* Empty state */}
-      {!isLoading && sortedTasks.length === 0 && (
+      {!isLoading && filteredTasks.length === 0 && (
         <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
           <div className="w-16 h-16 mb-4 rounded-full bg-background-secondary flex items-center justify-center">
             <svg
@@ -254,7 +284,7 @@ export function TaskList({
       )}
 
       {/* Task list */}
-      {!isLoading && sortedTasks.length > 0 && (
+      {!isLoading && filteredTasks.length > 0 && (
         <div className="flex flex-col gap-2">
           {/* Active tasks */}
           {activeTasks.length > 0 && (

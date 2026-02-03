@@ -5,8 +5,9 @@ import { TaskList, TaskDetailModal } from '@/components/tasks';
 import { ListSidebar } from '@/components/lists';
 import { SmartListSidebar } from '@/components/smart-lists';
 import { AdvancedFilterPanel, SavedFiltersModal } from '@/components/filters';
-import { useTasks } from '@/hooks/useTasks';
+import { useTasks, type SortBy, type SortOrder } from '@/hooks/useTasks';
 import { useLists } from '@/hooks/useLists';
+import { useSortPreferences } from '@/hooks/useSortPreferences';
 import { getSmartListFilter, type SmartListType } from '@/lib/smart-lists';
 import type { TaskFilter } from '@/components/filters';
 import type { SavedFilter } from '@/lib/filters/types';
@@ -36,6 +37,9 @@ export default function TasksPage() {
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [advancedFilter, setAdvancedFilter] = useState<TaskFilter>({});
   const [showSavedFilters, setShowSavedFilters] = useState(false);
+
+  // Sort preferences (persistent)
+  const { sortBy, sortOrder, updatePreferences } = useSortPreferences();
 
   // Data hooks
   const { lists } = useLists({ autoFetch: true });
@@ -98,9 +102,11 @@ export default function TasksPage() {
     return Object.keys(baseFilter).length > 0 ? baseFilter : undefined;
   }, [activeTab, selectedSmartList, selectedListId, advancedFilter]);
 
-  const { tasks, isLoading, error, addTask, updateTask, deleteTask } = useTasks({
+  const { tasks, isLoading, error, addTask, updateTask, deleteTask, reorderTasks } = useTasks({
     autoFetch: true,
     filter: taskFilter,
+    sortBy,
+    sortOrder,
   });
 
   // Task detail state
@@ -173,6 +179,14 @@ export default function TasksPage() {
     setActiveTab(tab);
     // Clear advanced filter when switching tabs
     setAdvancedFilter({});
+  };
+
+  const handleSortChange = (newSortBy: SortBy, newSortOrder: SortOrder) => {
+    updatePreferences(newSortBy, newSortOrder);
+  };
+
+  const handleReorderTasks = async (updates: Array<{ id: string; sortOrder: number }>) => {
+    return await reorderTasks(updates);
   };
 
   // Get current view title
@@ -365,6 +379,10 @@ export default function TasksPage() {
               onUpdateTask={handleUpdateTask}
               onDeleteTask={deleteTask}
               onEditTask={handleEditTask}
+              onReorderTasks={handleReorderTasks}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              onChangeSort={handleSortChange}
             />
           </div>
         </div>

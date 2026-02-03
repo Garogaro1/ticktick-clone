@@ -3,6 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { TaskDto } from '@/lib/tasks/types';
 
+export type SortBy = 'createdAt' | 'updatedAt' | 'dueDate' | 'priority' | 'title' | 'sortOrder';
+export type SortOrder = 'asc' | 'desc';
+
 export interface UseTasksOptions {
   autoFetch?: boolean;
   filter?: {
@@ -15,6 +18,8 @@ export interface UseTasksOptions {
     dueBefore?: string;
     dueAfter?: string;
   };
+  sortBy?: SortBy;
+  sortOrder?: SortOrder;
 }
 
 export interface UseTasksResult {
@@ -25,6 +30,7 @@ export interface UseTasksResult {
   addTask: (title: string, description?: string) => Promise<TaskDto | null>;
   updateTask: (id: string, updates: Partial<TaskDto>) => Promise<boolean>;
   deleteTask: (id: string) => Promise<boolean>;
+  reorderTasks: (updates: Array<{ id: string; sortOrder: number }>) => Promise<boolean>;
 }
 
 /**
@@ -33,7 +39,7 @@ export interface UseTasksResult {
  * Provides task CRUD operations with optimistic updates.
  */
 export function useTasks(options: UseTasksOptions = {}): UseTasksResult {
-  const { autoFetch = true, filter = {} } = options;
+  const { autoFetch = true, filter = {}, sortBy = 'sortOrder', sortOrder = 'asc' } = options;
 
   const [tasks, setTasks] = useState<TaskDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -50,6 +56,9 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksResult {
     if (filter.dueDate) params.set('dueDate', filter.dueDate);
     if (filter.dueBefore) params.set('dueBefore', filter.dueBefore);
     if (filter.dueAfter) params.set('dueAfter', filter.dueAfter);
+    // Add sort parameters
+    params.set('sortBy', sortBy);
+    params.set('sortOrder', sortOrder);
     return params.toString();
   };
 
@@ -171,6 +180,41 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksResult {
     }
   }, []);
 
+  // Reorder tasks (for drag-and-drop)
+  const reorderTasks = useCallback(
+    async (updates: Array<{ id: string; sortOrder: number }>): Promise<boolean> => {
+      setError(null);
+
+      try {
+        const response = await fetch('/api/tasks/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ updates }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to reorder tasks');
+        }
+
+        const data = await response.json();
+        const updatedTasks = data.tasks as TaskDto[];
+
+        // Update tasks with new sort orders
+        setTasks((prev) => {
+          const updatedMap = new Map<string, TaskDto>(updatedTasks.map((t) => [t.id, t]));
+          return prev.map((task) => updatedMap.get(task.id) ?? task);
+        });
+
+        return true;
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Unknown error');
+        return false;
+      }
+    },
+    []
+  );
+
   return {
     tasks,
     isLoading,
@@ -179,5 +223,6 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksResult {
     addTask,
     updateTask,
     deleteTask,
+    reorderTasks,
   };
 }

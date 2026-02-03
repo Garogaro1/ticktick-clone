@@ -589,6 +589,75 @@ export async function batchDeleteTasks(userId: string, taskIds: string[]): Promi
 }
 
 /**
+ * Reorder multiple tasks.
+ * Used for drag-and-drop reordering.
+ *
+ * @param userId - User ID for authorization
+ * @param updates - Array of { id, sortOrder } updates
+ * @returns Updated tasks
+ */
+export async function reorderTasks(
+  userId: string,
+  updates: Array<{ id: string; sortOrder: number }>
+): Promise<TaskDto[]> {
+  // Validate that all tasks belong to the user
+  const taskIds = updates.map((u) => u.id);
+  const tasks = await db.task.findMany({
+    where: {
+      id: { in: taskIds },
+      userId,
+    },
+  });
+
+  if (tasks.length !== taskIds.length) {
+    throw new Error('One or more tasks not found or unauthorized');
+  }
+
+  // Update sort orders in a transaction
+  await db.$transaction(
+    updates.map((update) =>
+      db.task.updateMany({
+        where: {
+          id: update.id,
+          userId,
+        },
+        data: {
+          sortOrder: update.sortOrder,
+        },
+      })
+    )
+  );
+
+  // Fetch and return updated tasks
+  const updatedTasks = await db.task.findMany({
+    where: {
+      id: { in: taskIds },
+      userId,
+    },
+    include: {
+      tags: {
+        include: {
+          tag: {
+            select: {
+              id: true,
+              name: true,
+              color: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          subtasks: true,
+        },
+      },
+    },
+  });
+
+  return updatedTasks.map(toTaskDtoFromTags);
+}
+
+/**
  * Get default list ID for a user.
  * Creates one if it doesn't exist.
  *
