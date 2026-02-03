@@ -7,6 +7,7 @@
 
 import { Task, TaskStatus, Priority } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
+import type { ReminderDto } from '@/lib/reminders';
 
 // Re-export Prisma enums for use in other modules
 export type { TaskStatus, Priority };
@@ -42,6 +43,7 @@ export interface TaskDto {
   listId: string;
   parentId: string | null;
   tags: TaskTagDto[];
+  reminders?: ReminderDto[]; // Optional reminders array
   subtasks?: TaskDto[];
   // Counters for performance
   _count?: {

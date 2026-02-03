@@ -6,7 +6,9 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TagPicker } from '@/components/tags';
+import { ReminderPicker, ReminderList } from '@/components/reminders';
 import { useTags } from '@/hooks/useTags';
+import { useTaskReminders } from '@/hooks/useReminders';
 import { cn } from '@/lib/utils';
 import type { TaskDto } from '@/lib/tasks/types';
 import type { TagDto } from '@/lib/tags/types';
@@ -65,6 +67,15 @@ export function TaskDetailModal({
   const [isSaving, setIsSaving] = useState(false);
 
   const { addTag, tags: allTags } = useTags({ autoFetch: true });
+  const {
+    reminders,
+    isLoading: remindersLoading,
+    addReminder,
+    deleteReminder,
+    dismissReminder,
+    snoozeReminder,
+    refetch: refetchReminders,
+  } = useTaskReminders(task?.id);
 
   // Sync form with task
   useEffect(() => {
@@ -78,6 +89,13 @@ export function TaskDetailModal({
       setSelectedTagIds(task.tags?.map((tag) => tag.id) || []);
     }
   }, [task]);
+
+  // Refetch reminders when modal opens
+  useEffect(() => {
+    if (isOpen && task?.id) {
+      refetchReminders();
+    }
+  }, [isOpen, task?.id, refetchReminders]);
 
   const handleSave = async () => {
     if (!task || !onSave) return;
@@ -127,6 +145,41 @@ export function TaskDetailModal({
       setShowDeleteConfirm(false);
       onClose();
     }
+  };
+
+  const handleAddReminder = async (
+    preset: string,
+    customFireAt?: Date,
+    customRelativeOffset?: number | null
+  ): Promise<boolean> => {
+    if (!task) return false;
+
+    const result = await addReminder(
+      task.id,
+      preset as
+        | 'at_deadline'
+        | '5min_before'
+        | '15min_before'
+        | '30min_before'
+        | '1hour_before'
+        | '1day_before'
+        | 'custom',
+      customFireAt,
+      customRelativeOffset
+    );
+    return result !== null;
+  };
+
+  const handleDeleteReminder = async (reminderId: string) => {
+    await deleteReminder(reminderId);
+  };
+
+  const handleDismissReminder = async (reminderId: string) => {
+    await dismissReminder(reminderId);
+  };
+
+  const handleSnoozeReminder = async (reminderId: string, minutes: number) => {
+    await snoozeReminder(reminderId, minutes);
   };
 
   if (!task) return null;
@@ -312,6 +365,39 @@ export function TaskDetailModal({
               min="0"
               className="w-full px-4 py-3 bg-background-card border border-border-subtle rounded-lg text-text-primary focus:border-primary outline-none transition-all duration-200"
             />
+          </div>
+        </div>
+
+        {/* Reminders */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-sm font-medium text-text-secondary">Reminders</label>
+            <ReminderPicker
+              taskId={task.id}
+              taskDueDate={task.dueDate ? new Date(task.dueDate) : null}
+              onAdd={handleAddReminder}
+            />
+          </div>
+          <div className="mt-2">
+            {remindersLoading ? (
+              <div className="text-center py-4 text-sm text-text-tertiary">
+                Loading reminders...
+              </div>
+            ) : reminders.length > 0 ? (
+              <ReminderList
+                reminders={reminders}
+                taskTitle={task.title}
+                taskDueDate={task.dueDate ? new Date(task.dueDate) : null}
+                onDismiss={handleDismissReminder}
+                onDelete={handleDeleteReminder}
+                onSnooze={handleSnoozeReminder}
+                className="max-h-48 overflow-y-auto"
+              />
+            ) : (
+              <p className="text-sm text-text-tertiary py-4 text-center">
+                No reminders set. Click "Add Reminder" to create one.
+              </p>
+            )}
           </div>
         </div>
 

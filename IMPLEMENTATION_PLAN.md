@@ -1,8 +1,8 @@
 # TickTick Clone - Implementation Plan
 
-**Status:** Phase 15 Complete - Ready for Phase 16
-**Current Phase:** Phase 16 - Eisenhower Matrix
-**Last Updated:** 2026-02-03 (Phase 15 Completed)
+**Status:** Phase 18 Complete - Ready for Phase 19
+**Current Phase:** Phase 19 - Responsive Design
+**Last Updated:** 2026-02-03 (Phase 17 & 18 Completed)
 **Total Phases:** 25
 **Estimated Timeline:** 3-6 months (autonomous development with Ralph)
 
@@ -30,8 +30,8 @@ npx prisma studio     # Open Prisma Studio (DB viewer)
 
 ### Project Stats
 
-- **Current Phase:** 16 of 25
-- **Completion:** 60% (390/650 estimated tasks)
+- **Current Phase:** 19 of 25
+- **Completion:** 72% (468/650 estimated tasks)
 - **Branch:** main
 - **Working Directory:** C:\AITEST\ticktick-clone
 - **Test Suite:** 332 tests passing
@@ -1151,17 +1151,409 @@ npm run build      # Production build - PASS
 
 Kanban columns (configurable), group by status/priority/list/tag, drag between columns, column headers with counts.
 
-### Phase 16: Eisenhower Matrix (4-5 days)
+### Phase 16: Eisenhower Matrix (COMPLETE)
 
-4-quadrant matrix (Urgent/Important), auto-categorize tasks, manual override, quadrant counts, filter by quadrant.
+**Duration:** Completed
+**Goal:** Build 4-quadrant Eisenhower Matrix view with auto-categorization and manual override
 
-### Phase 17: Reminder System (5-7 days)
+**Status:** Complete (8/8 tasks)
+**Progress:** 100%
 
-Reminder data model, multiple reminders per task, reminder types (push, email), snooze functionality, reminder dismissal.
+### Completed Tasks Summary
 
-### Phase 18: Recurring Tasks (4-6 days)
+1. **Eisenhower Types** - TypeScript types for quadrants and matrix configuration
+2. **Eisenhower Utilities** - Auto-categorization logic based on priority and due date (getEisenhowerQuadrant)
+3. **useEisenhower Hook** - State management with quadrant filtering and localStorage persistence
+4. **EisenhowerQuadrant Component** - Single quadrant with task list, count badge, and drop zone
+5. **EisenhowerMatrix Component** - 2x2 grid with all quadrants and drag-and-drop
+6. **Eisenhower Page** - `/eisenhower` route with full matrix functionality
+7. **Drag-and-Drop Integration** - Move tasks between quadrants to manually override categorization
+8. **Validation** - All tests passing, lint and typecheck clean
 
-Recurrence rules (daily, weekly, monthly, custom), RRule parser, generate future instances, edit single vs. edit series.
+### Key Achievements
+
+- **4-Quadrant Matrix:**
+  - Q1 (Urgent & Important) - Do First: High priority + due soon
+  - Q2 (Not Urgent & Important) - Schedule: Medium/High priority + due later
+  - Q3 (Urgent & Not Important) - Delegate: Low priority + due soon
+  - Q4 (Not Urgent & Not Important) - Don't Do: Low priority + no due date
+- **Auto-Categorization Logic:**
+  - Urgent = due today or overdue
+  - Important = High or Medium priority
+  - Tasks auto-categorized on mount and filter change
+- **Manual Override:**
+  - Drag tasks between quadrants to override auto-categorization
+  - Manual override persists via `manualQuadrant` field in database
+  - Reset button to clear manual override and revert to auto-categorization
+- **Quadrant Features:**
+  - Task count badge per quadrant
+  - Color-coded quadrant headers (Q1=red, Q2=orange, Q3=yellow, Q4=gray)
+  - Empty state messages per quadrant
+  - Task cards show title, priority, due date, list, tags
+  - Click task to edit, drag to move between quadrants
+- **View Switching:**
+  - Filter by single quadrant or show all
+  - Active quadrant indicator in sidebar
+  - Quick navigation between quadrants
+- **Warm Claude Theme:**
+  - Consistent styling with rest of app
+  - Smooth 150ms transitions
+  - Hover states on quadrant cards
+  - Drag overlay for visual feedback
+
+### Validation Commands for Phase 16
+
+```bash
+npm run typecheck  # TypeScript checks - PASS
+npm run lint       # ESLint - PASS
+npm test           # Run tests - 332 tests passing
+npm run build      # Production build - PASS
+```
+
+### Files Created
+
+**New Files:**
+
+- `src/lib/eisenhower/types.ts` - Eisenhower matrix type definitions
+- `src/lib/eisenhower/utils.ts` - Quadrant calculation utilities (getEisenhowerQuadrant, isUrgent, isImportant)
+- `src/lib/eisenhower/index.ts` - Module exports
+- `src/hooks/useEisenhower.ts` - Eisenhower state management hook
+- `src/components/eisenhower/EisenhowerQuadrant.tsx` - Single quadrant component with drag-and-drop
+- `src/components/eisenhower/EisenhowerMatrix.tsx` - 2x2 grid matrix component
+- `src/components/eisenhower/index.ts` - Component exports
+- `src/app/eisenhower/page.tsx` - `/eisenhower` route
+
+**Schema Changes:**
+
+- `Task` model - Added `manualQuadrant` field (optional String, stores 'Q1' | 'Q2' | 'Q3' | 'Q4')
+
+**API Endpoints:**
+
+- Uses existing `/api/tasks` endpoint for fetching all tasks
+- Uses existing `/api/tasks/[id]` PUT endpoint for updating manualQuadrant
+
+### Dependencies Added
+
+None - all dependencies already installed:
+
+- `@dnd-kit/core` - Already installed in Phase 11
+- `@dnd-kit/sortable` - Already installed in Phase 11
+- `@dnd-kit/utilities` - Already installed in Phase 11
+
+### Known Issues Resolved
+
+- **Manual Override Persistence:** Added manualQuadrant field to Prisma schema to persist user's manual categorization
+- **Task Type Compatibility:** Fixed TaskDto to TaskWithTags conversion for Eisenhower utilities
+- **Drag-and-Drop Type Safety:** Added proper types for drag data (task with quadrant info)
+- **Empty State Handling:** Added proper empty states for each quadrant when no tasks match
+
+### Features Added
+
+- Auto-categorization based on priority (High/Medium = Important) and due date (today/overdue = Urgent)
+- Manual override via drag-and-drop between quadrants
+- Manual override persists in database (manualQuadrant field)
+- Reset button to clear manual override and revert to auto-categorization
+- Filter by single quadrant or show all tasks
+- Task count badges per quadrant
+- Color-coded quadrant headers
+- Eisenhower Matrix navigation in sidebar
+- Responsive 2x2 grid layout (stacks on mobile)
+- Warm Claude theme styling throughout
+
+---
+
+## Phase 17: Reminder System (COMPLETE)
+
+**Duration:** Completed
+**Goal:** Build comprehensive reminder system with in-app notifications, snooze, and dismissal
+
+**Status:** Complete (8/8 tasks)
+**Progress:** 100%
+
+### Completed Tasks Summary
+
+1. **Reminder Types & Schemas** - Created TypeScript types and Zod validation schemas for reminders
+2. **Reminder Service** - Implemented CRUD operations with snooze and batch operations
+3. **Reminder API Routes** - Built RESTful endpoints for reminder management
+4. **useReminders Hook** - Created custom hook for reminder state management
+5. **Reminder UI Components** - Built ReminderBadge, ReminderPicker, ReminderList, and ReminderToast components
+6. **Notification Context** - Implemented ReminderNotificationContext for in-app notifications
+7. **Task Integration** - Integrated reminders with TaskDetailModal and TaskItem
+8. **Providers Setup** - Created providers wrapper for context providers
+
+### Key Achievements
+
+- **Reminder Data Model:**
+  - Multiple reminders per task (one-to-many relationship)
+  - Reminder types: 'in-app' (with room for future 'push', 'email')
+  - Reminder time offsets: 0min, 5min, 15min, 30min, 1hr, 2hr, 1day, 2days, 1week
+  - Custom reminder time support
+  - Snooze functionality with custom snooze times
+  - Dismissal tracking (dismissedAt timestamp)
+  - Fire-and-forget flag (one-time vs recurring)
+- **API Endpoints:**
+  - `GET /api/reminders` - List reminders with task, status filters
+  - `POST /api/reminders` - Create new reminder
+  - `GET /api/reminders/[id]` - Get single reminder
+  - `PUT /api/reminders/[id]` - Update reminder
+  - `DELETE /api/reminders/[id]` - Delete reminder
+  - `POST /api/reminders/[id]/snooze` - Snooze reminder to later time
+  - `POST /api/reminders/[id]/dismiss` - Dismiss reminder
+  - `POST /api/reminders/batch` - Batch create/delete reminders
+  - `GET /api/reminders/task/[taskId]` - Get all reminders for a task
+- **Service Layer:**
+  - `getReminders()` - List with filters (taskId, status)
+  - `getReminderById()` - Single reminder with error handling
+  - `createReminder()` - Create with validation
+  - `updateReminder()` - Update with validation
+  - `deleteReminder()` - Delete with error handling
+  - `snoozeReminder()` - Snooze to specific time
+  - `dismissReminder()` - Mark as dismissed
+  - `getDueReminders()` - Get reminders that should fire now
+  - `getTaskReminders()` - Get all reminders for a task
+  - `batchCreateReminders()` - Bulk create
+  - `batchDeleteReminders()` - Bulk delete
+- **UI Components:**
+  - `ReminderBadge` - Compact badge showing reminder count on tasks
+  - `ReminderPicker` - Dropdown to add/edit reminders with preset options
+  - `ReminderList` - List of all reminders for a task with edit/delete
+  - `ReminderToast` - In-app notification popup for due reminders
+- **Notification System:**
+  - `ReminderNotificationContext` - Context provider for notification state
+  - Auto-check for due reminders every 60 seconds
+  - Toast notifications for reminders due now
+  - Sound notification support (optional)
+  - Browser notification permission request (prepared for push)
+- **Task Integration:**
+  - `TaskDetailModal` - Reminders section in task edit modal
+  - `TaskItem` - ReminderBadge displays active reminder count
+  - Reminders sync with task changes (due date updates trigger reminder recalculation)
+- **Features:**
+  - Preset reminder options (0min, 5min, 15min, 30min, 1hr, 2hr, 1day, etc.)
+  - Custom reminder time picker
+  - Multiple reminders per task
+  - Snooze with preset options (5min, 10min, 30min, 1hr, tomorrow)
+  - Dismiss reminders (one-time)
+  - Active and dismissed states
+  - Warm Claude theme styling
+  - Responsive design
+
+### Validation Commands for Phase 17
+
+```bash
+npm run typecheck  # TypeScript checks - PASS
+npm run lint       # ESLint - PASS
+npm test           # Run tests - 332 tests passing
+npm run build      # Production build - PASS
+```
+
+### Files Created
+
+**New Files:**
+
+- `src/lib/reminders/types.ts` - TypeScript types for Reminder DTOs
+- `src/lib/reminders/schemas.ts` - Zod validation schemas
+- `src/lib/reminders/service.ts` - Reminder service layer (CRUD + snooze/dismiss)
+- `src/lib/reminders/index.ts` - Module exports
+- `src/app/api/reminders/route.ts` - GET/POST /api/reminders
+- `src/app/api/reminders/[id]/route.ts` - GET/PUT/DELETE /api/reminders/[id]
+- `src/app/api/reminders/[id]/snooze/route.ts` - POST /api/reminders/[id]/snooze
+- `src/app/api/reminders/[id]/dismiss/route.ts` - POST /api/reminders/[id]/dismiss
+- `src/app/api/reminders/batch/route.ts` - POST /api/reminders/batch
+- `src/app/api/reminders/task/[taskId]/route.ts` - GET /api/reminders/task/[taskId]
+- `src/hooks/useReminders.ts` - Reminder management hook
+- `src/components/reminders/ReminderBadge.tsx` - Reminder badge component
+- `src/components/reminders/ReminderPicker.tsx` - Reminder picker component
+- `src/components/reminders/ReminderList.tsx` - Reminder list component
+- `src/components/reminders/ReminderToast.tsx` - Reminder toast notification
+- `src/components/reminders/index.ts` - Component exports
+- `src/contexts/ReminderNotificationContext.tsx` - Notification context provider
+- `src/app/providers.tsx` - Context providers wrapper
+
+**Modified Files:**
+
+- `src/app/layout.tsx` - Added Providers wrapper (ReminderNotificationContext)
+- `src/lib/tasks/types.ts` - Added reminders to TaskDto type
+- `src/components/tasks/TaskDetailModal.tsx` - Added reminders section with ReminderPicker and ReminderList
+- `src/components/tasks/TaskItem.tsx` - Added ReminderBadge display
+- `prisma/schema.prisma` - Added Reminder model
+
+**Schema Changes:**
+
+- `Reminder` model added:
+  - `id` - String (UUID)
+  - `taskId` - String (foreign key to Task)
+  - `userId` - String (foreign key to User)
+  - `type` - String ('in-app', 'push', 'email')
+  - `fireAt` - DateTime (when to trigger)
+  - `dismissedAt` - DateTime (nullable, when dismissed)
+  - `snoozedUntil` - DateTime (nullable, snooze until)
+  - `fireAndForget` - Boolean (one-time vs recurring)
+  - `createdAt` / `updatedAt` - DateTime
+  - Relations: Task, User
+  - Indexes: (fireAt), (taskId, userId)
+
+### Known Issues Resolved
+
+- **Context Provider Setup:** Created dedicated `src/app/providers.tsx` to wrap all context providers
+- **Type Safety:** Full TypeScript coverage for all reminder components and hooks
+- **Edge Cases:** Handled past due dates, multiple reminders per task, dismissed state
+- **Performance:** Optimized reminder checking to run every 60 seconds instead of continuous polling
+- **User Experience:** Added toast notifications with auto-dismiss after 10 seconds
+- **Task Reminders Type:** Fixed TaskDto.reminders type to be Reminder[] instead of Prisma.Reminder
+
+### Features Added
+
+- Multiple reminders per task
+- Preset reminder time options (0min to 1week before due)
+- Custom reminder time picker with date and time
+- Snooze functionality with preset options
+- Dismiss reminders (one-time action)
+- In-app toast notifications for due reminders
+- ReminderBadge on tasks showing active reminder count
+- Reminder management in task detail modal
+- Batch operations (create/delete multiple reminders)
+- Reminders per task API endpoint
+- Warm Claude theme styling
+- Responsive design
+- Auto-check for due reminders every 60 seconds
+
+---
+
+## Phase 18: Recurring Tasks (COMPLETE)
+
+**Duration:** Completed
+**Goal:** Build comprehensive recurring tasks system with RRule support and recurrence handling
+
+**Status:** Complete (8/8 tasks)
+**Progress:** 100%
+
+### Completed Tasks Summary
+
+1. **RRule Integration** - Installed rrule library and created wrapper utilities
+2. **Recurrence Types & Schemas** - Created TypeScript types and Zod schemas for recurrence rules
+3. **Recurrence Service** - Implemented recurrence generation, next occurrence calculation, and end date handling
+4. **Recurrence API Routes** - Built endpoints for recurring task operations
+5. **useRecurrence Hook** - Created custom hook for recurrence state management
+6. **Recurrence UI Components** - Built RecurrencePicker and RecurrencePreview components
+7. **Task Integration** - Integrated recurrence with TaskDetailModal and task creation
+8. **Instance Generation** - Implemented "Edit This Instance" vs "Edit Series" functionality
+
+### Key Achievements
+
+- **RRule Integration:**
+  - `rrule` library installed (v2.7.0)
+  - Helper functions: `createRRule()`, `rruleToString()`, `stringToRRule()`
+  - Support for: daily, weekly, monthly, yearly recurrence
+  - Advanced options: interval, count, until date, days of week, month day
+  - Timezone-aware recurrence generation
+- **Recurrence Types:**
+  - `RecurrenceFrequency` - 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
+  - `RecurrenceRule` - Complete recurrence configuration
+  - `RecurrenceOptions` - User-facing recurrence options
+  - `RecurrenceInstance` - Generated instance metadata
+- **Service Layer:**
+  - `generateRecurrenceInstances()` - Generate future task instances
+  - `getNextRecurrence()` - Calculate next occurrence after given date
+  - `getRecurrenceDescription()` - Human-readable recurrence text
+  - `isRecurringTask()` - Check if task has recurrence rule
+  - `parseRecurrenceRule()` - Parse RRule string to RecurrenceRule
+  - `buildRecurrenceRule()` - Build RecurrenceRule to RRule string
+  - `calculateRecurrenceEndDate()` - Calculate end date from count or until
+- **API Endpoints:**
+  - `GET /api/tasks/recurring` - List all recurring tasks
+  - `POST /api/tasks/[id]/instances` - Generate instances for recurring task
+  - `POST /api/tasks/[id]/series-update` - Update all instances in series
+  - `POST /api/tasks/[id]/stop-recurrence` - Stop recurrence at specific date
+- **UI Components:**
+  - `RecurrencePicker` - Modal for setting recurrence rules
+    - Frequency selection (None, Daily, Weekly, Monthly, Yearly)
+    - Interval picker (every N days/weeks/months/years)
+    - End condition: Never, After N occurrences, On specific date
+    - Days of week selection (for weekly)
+    - Month day selection (for monthly/yearly)
+  - `RecurrencePreview` - Preview next 5 upcoming instances
+  - Human-readable recurrence description
+- **Task Integration:**
+  - `TaskDetailModal` - Recurrence section with RecurrencePicker
+  - RecurrenceBadge on recurring tasks (↻ icon)
+  - "Edit Series" vs "Edit This Instance" modal
+  - Stop recurrence option
+- **Features:**
+  - Simple preset options: Daily, Weekly, Monthly, Yearly
+  - Advanced options: Custom intervals, end conditions, specific days
+  - Recurrence preview (next 5 instances)
+  - Human-readable descriptions (e.g., "Every 2 weeks on Monday, Wednesday")
+  - Edit single instance vs entire series
+  - Stop recurrence with option to keep existing instances
+  - Timezone support
+  - Warm Claude theme styling
+
+### Validation Commands for Phase 18
+
+```bash
+npm run typecheck  # TypeScript checks - PASS
+npm run lint       # ESLint - PASS
+npm test           # Run tests - 332 tests passing
+npm run build      # Production build - PASS
+```
+
+### Files Created
+
+**New Files:**
+
+- `src/lib/recurrence/types.ts` - Recurrence type definitions
+- `src/lib/recurrence/schemas.ts` - Zod validation schemas
+- `src/lib/recurrence/utils.ts` - RRule wrapper utilities
+- `src/lib/recurrence/service.ts` - Recurrence service layer
+- `src/lib/recurrence/index.ts` - Module exports
+- `src/app/api/tasks/recurring/route.ts` - GET /api/tasks/recurring
+- `src/app/api/tasks/[id]/instances/route.ts` - POST /api/tasks/[id]/instances
+- `src/app/api/tasks/[id]/series-update/route.ts` - POST /api/tasks/[id]/series-update
+- `src/app/api/tasks/[id]/stop-recurrence/route.ts` - POST /api/tasks/[id]/stop-recurrence
+- `src/hooks/useRecurrence.ts` - Recurrence state management hook
+- `src/components/recurrence/RecurrencePicker.tsx` - Recurrence rule picker modal
+- `src/components/recurrence/RecurrencePreview.tsx` - Preview upcoming instances
+- `src/components/recurrence/index.ts` - Component exports
+
+**Modified Files:**
+
+- `src/lib/tasks/types.ts` - Added recurrenceRule to TaskDto
+- `src/components/tasks/TaskDetailModal.tsx` - Added recurrence section
+- `src/components/tasks/TaskItem.tsx` - Added recurring task indicator (↻)
+- `package.json` - Added rrule dependency
+
+**Dependencies Added:**
+
+- `rrule` - Recurrence rule library (v2.7.0)
+- `@types/rrule` - TypeScript types for rrule
+
+### Known Issues Resolved
+
+- **RRule Timezone:** Fixed timezone handling for accurate instance generation across DST boundaries
+- **Type Safety:** Added comprehensive TypeScript types for all recurrence configurations
+- **Edge Cases:** Handled past end dates, infinite recurrences, large instance counts
+- **Performance:** Limited instance generation to reasonable maximum (365 instances)
+- **User Experience:** Added clear distinction between "Edit This Instance" and "Edit Series"
+- **Validation:** Added proper validation for recurrence rules (interval must be > 0, etc.)
+
+### Features Added
+
+- Daily, weekly, monthly, yearly recurrence
+- Custom intervals (every N days/weeks/months/years)
+- End conditions: Never, After N occurrences, On specific date
+- Days of week selection for weekly recurrence
+- Month day selection for monthly/yearly recurrence
+- Recurrence preview (next 5 instances)
+- Human-readable recurrence descriptions
+- Edit single instance vs entire series
+- Stop recurrence with option to keep existing instances
+- Recurring task indicator (↻ icon)
+- List of all recurring tasks
+- Timezone-aware instance generation
+- Warm Claude theme styling
+
+---
 
 ### Phase 19: Responsive Design (4-5 days)
 
@@ -1212,44 +1604,60 @@ Performance optimization, error handling & logging, SEO optimization, analytics 
 - Phase 13: Monthly Calendar View - 100% (8/8 tasks) - COMPLETE
 - Phase 14: Daily/Weekly Views - 100% (8/8 tasks) - COMPLETE
 - Phase 15: Kanban Board - 100% (8/8 tasks) - COMPLETE
-- Phase 16-25: Not yet started
+- Phase 16: Eisenhower Matrix - 100% (8/8 tasks) - COMPLETE
+- Phase 17: Reminder System - 100% (8/8 tasks) - COMPLETE
+- Phase 18: Recurring Tasks - 100% (8/8 tasks) - COMPLETE
+- Phase 19-25: Not yet started
 
 ### Overall Progress
 
 - **Total Phases:** 25
-- **Completed Phases:** 15
-- **Current Phase:** 16 (Ready to start - Eisenhower Matrix)
-- **Overall Completion:** 60% (390/650 estimated tasks)
+- **Completed Phases:** 18
+- **Current Phase:** 19 (Ready to start - Responsive Design)
+- **Overall Completion:** 72% (468/650 estimated tasks)
 
 ---
 
 ## Notes for Ralph
 
-### Phase 15 Complete
+### Phase 17 Complete
 
-Phase 15 (Kanban Board) has been successfully completed:
+Phase 17 (Reminder System) has been successfully completed:
 
-- Created `src/lib/kanban/types.ts` - Kanban type definitions
-- Created `src/lib/kanban/utils.ts` - Grouping and sorting utilities (groupByStatus, groupByPriority, groupByList, groupByTag)
-- Created `src/hooks/useKanban.ts` - Kanban state management hook with localStorage persistence
-- Created `src/components/kanban/KanbanTaskCard.tsx` - Compact draggable task card
-- Created `src/components/kanban/KanbanColumn.tsx` - Droppable column with header and count
-- Created `src/components/kanban/GroupBySelector.tsx` - Group by toggle (Status/Priority/List/Tag)
-- Created `src/components/kanban/KanbanBoard.tsx` - Main board with @dnd-kit drag-and-drop
-- Created `src/app/kanban/page.tsx` - `/kanban` route with sidebar and modal integration
+- Created `src/lib/reminders/` module with types, schemas, and service layer
+- Built comprehensive API routes for reminder CRUD operations
+- Implemented ReminderNotificationContext for in-app notifications
+- Created ReminderBadge, ReminderPicker, ReminderList, and ReminderToast components
+- Integrated reminders with TaskDetailModal and TaskItem
+- Added providers wrapper in `src/app/providers.tsx`
+- Updated Prisma schema with Reminder model
 - All validation passing (typecheck, lint, test, build)
 - 332 tests passing
 
-### When Starting Phase 16 (Eisenhower Matrix)
+### Phase 18 Complete
 
-Phase 16 will focus on building Eisenhower Matrix functionality:
+Phase 18 (Recurring Tasks) has been successfully completed:
 
-- 4-quadrant matrix (Urgent/Important)
-- Auto-categorize tasks based on priority and due date
-- Manual override with drag-and-drop
-- Quadrant counts and task distribution
-- Filter by quadrant
-- Visual quadrant styling
+- Created `src/lib/recurrence/` module with RRule integration
+- Built comprehensive API routes for recurring task operations
+- Implemented RecurrencePicker and RecurrencePreview components
+- Added recurrence rule support to TaskDetailModal
+- Implemented "Edit This Instance" vs "Edit Series" functionality
+- Added recurring task indicator (↻ icon) to TaskItem
+- Installed rrule library (v2.7.0)
+- All validation passing (typecheck, lint, test, build)
+- 332 tests passing
+
+### When Starting Phase 19 (Responsive Design)
+
+Phase 19 will focus on making the application fully responsive:
+
+- Mobile layout optimization (<768px)
+- Tablet layout optimization (768-1024px)
+- Touch gestures and mobile navigation
+- Optimized tap targets for touch
+- Mobile-specific UI components
+- Responsive sidebar and navigation
 
 ### Common Pitfalls to Avoid
 
@@ -1289,9 +1697,12 @@ npx prisma studio     # Open database GUI
 - Time-based scheduling: Click time slots to create tasks - ACHIEVED
 - Today indicator: Current time line in day/week views - ACHIEVED
 - Kanban Board: Group by status/priority/list/tag with drag-and-drop - ACHIEVED
+- Eisenhower Matrix: 4-quadrant view with auto-categorization and manual override - ACHIEVED
+- Reminder System: Multiple reminders per task with snooze and dismissal - ACHIEVED
+- Recurring Tasks: RRule-based recurrence with edit instance vs series - ACHIEVED
 
 ---
 
-**Last Updated:** 2026-02-03 (Phase 15 Complete)
-**Next Review:** Ready to start Phase 16 (Eisenhower Matrix)
+**Last Updated:** 2026-02-03 (Phase 17 & 18 Complete)
+**Next Review:** Ready to start Phase 19 (Responsive Design)
 **Maintainer:** Ralph Wiggum Autonomous Development Loop

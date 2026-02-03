@@ -28,6 +28,7 @@ model User {
   habits  Habit[]
   goals   Goal[]
   sessions PomodoroSession[]
+  reminders Reminder[]
 
   @@index([email])
   @@map("users")
@@ -121,6 +122,7 @@ model Task {
   subtasks Task[]  @relation("TaskSubtask")
 
   tags TaskTag[]
+  reminders Reminder[]
 
   @@index([userId])
   @@index([listId])
@@ -231,6 +233,37 @@ model PomodoroSession {
   @@map("pomodoro_sessions")
 }
 
+// Reminder model for Phase 17
+model Reminder {
+  id             String        @id @default(cuid())
+  type           ReminderType  @default(IN_APP)
+  fireAt         DateTime      // When the reminder should fire
+  relativeOffset Int?          // Minutes before due date (null = absolute time)
+  status         ReminderStatus @default(PENDING)
+
+  // Snooze support
+  snoozedUntil   DateTime?     // When to fire after snooze
+  snoozeCount    Int           @default(0) // Number of times snoozed
+
+  // Timestamps
+  sentAt         DateTime?     // When reminder was sent/delivered
+  dismissedAt    DateTime?     // When user dismissed
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  // Relations
+  taskId String
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@index([userId, fireAt])
+  @@index([status, fireAt])
+  @@map("reminders")
+}
+
 // Enums
 enum TaskStatus {
   TODO
@@ -251,4 +284,17 @@ enum GoalStatus {
   PAUSED
   COMPLETED
   ABANDONED
+}
+
+enum ReminderType {
+  IN_APP   // In-app toast notification
+  PUSH     // Browser push notification
+  EMAIL    // Email notification
+}
+
+enum ReminderStatus {
+  PENDING   // Waiting to be sent
+  SENT      // Has been sent/delivered
+  DISMISSED // User dismissed the reminder
+  SNOOZED   // User snoozed the reminder
 }

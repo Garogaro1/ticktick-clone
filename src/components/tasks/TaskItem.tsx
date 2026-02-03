@@ -4,6 +4,7 @@ import { useState, useRef, useEffect, KeyboardEvent, MouseEvent } from 'react';
 import { TaskStatus, Priority } from '@prisma/client';
 import { cn } from '@/lib/utils';
 import { TagBadge } from '@/components/tags';
+import { ReminderBadge } from '@/components/reminders';
 import type { TaskDto } from '@/lib/tasks/types';
 
 export interface DragHandleProps {
@@ -317,6 +318,11 @@ export function TaskItem({
                 </svg>
                 {task._count?.subtasks}
               </span>
+            )}
+
+            {/* Reminders badge */}
+            {task.reminders && task.reminders.length > 0 && (
+              <ReminderBadge reminders={task.reminders} />
             )}
           </div>
         )}
