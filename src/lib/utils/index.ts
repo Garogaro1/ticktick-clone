@@ -7,4 +7,5 @@
 
 export * from './cn';
 export * from './date';
+export * from './timezone';
 export * from './validation';

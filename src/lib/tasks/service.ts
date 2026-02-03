@@ -7,7 +7,27 @@
 
 import { db } from '@/lib/db';
 import { Prisma, TaskStatus, Priority } from '@prisma/client';
+import { parseDuration } from '@/lib/utils/date';
 import type { TaskDto, TaskListOptions, TaskWithTags, TaskWithFullRelations } from './types';
+
+/**
+ * Normalize duration input to minutes (number).
+ * Handles both number (minutes) and string (duration format) inputs.
+ */
+function normalizeDuration(value: number | string | null | undefined): number | null {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === 'number') {
+    return value;
+  }
+  // Parse duration string (e.g., "1h 30m", "90m")
+  try {
+    return parseDuration(value);
+  } catch {
+    return null;
+  }
+}
 
 /**
  * Convert Prisma Task model with tags to Task DTO.
@@ -246,7 +266,7 @@ export async function createTask(
     priority?: string;
     dueDate?: Date | null;
     startDate?: Date | null;
-    estimatedTime?: number | null;
+    estimatedTime?: number | string | null;
     listId?: string;
     parentId?: string;
     sortOrder?: number;
@@ -308,7 +328,7 @@ export async function createTask(
     createData.startDate = taskData.startDate;
   }
   if (taskData.estimatedTime !== undefined) {
-    createData.estimatedTime = taskData.estimatedTime;
+    createData.estimatedTime = normalizeDuration(taskData.estimatedTime);
   }
   if (taskData.parentId) {
     createData.parent = { connect: { id: taskData.parentId } };
@@ -382,8 +402,8 @@ export async function updateTask(
     dueDate?: Date | null;
     startDate?: Date | null;
     completedAt?: Date | null;
-    estimatedTime?: number | null;
-    spentTime?: number | null;
+    estimatedTime?: number | string | null;
+    spentTime?: number | string | null;
     recurrenceRule?: string | null;
     listId?: string | null;
     parentId?: string | null;
@@ -426,10 +446,10 @@ export async function updateTask(
     updateData.completedAt = completedAt;
   }
   if (taskData.estimatedTime !== undefined) {
-    updateData.estimatedTime = taskData.estimatedTime;
+    updateData.estimatedTime = normalizeDuration(taskData.estimatedTime);
   }
   if (taskData.spentTime !== undefined) {
-    updateData.spentTime = taskData.spentTime;
+    updateData.spentTime = normalizeDuration(taskData.spentTime);
   }
   if (taskData.recurrenceRule !== undefined) {
     updateData.recurrenceRule = taskData.recurrenceRule;
