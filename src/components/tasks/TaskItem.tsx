@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, KeyboardEvent, MouseEvent } from 'react';
 import { TaskStatus, Priority } from '@prisma/client';
 import { cn } from '@/lib/utils';
+import { TagBadge } from '@/components/tags';
 import type { TaskDto } from '@/lib/tasks/types';
 
 export interface TaskItemProps {
@@ -215,6 +216,15 @@ export function TaskItem({
               >
                 {priority.label}
               </span>
+            )}
+
+            {/* Tags */}
+            {task.tags && task.tags.length > 0 && (
+              <div className="flex items-center gap-1 flex-wrap">
+                {task.tags.map((tag) => (
+                  <TagBadge key={tag.id} tag={tag} variant="compact" />
+                ))}
+              </div>
             )}
 
             {/* Due date */}

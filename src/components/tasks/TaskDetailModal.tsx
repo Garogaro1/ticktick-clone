@@ -1,12 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { TaskStatus, Priority } from '@prisma/client';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { TagPicker } from '@/components/tags';
+import { useTags } from '@/hooks/useTags';
 import { cn } from '@/lib/utils';
 import type { TaskDto } from '@/lib/tasks/types';
+import type { TagDto } from '@/lib/tags/types';
 
 export interface TaskDetailModalProps {
   task: TaskDto | null;
@@ -57,8 +60,11 @@ export function TaskDetailModal({
   const [priority, setPriority] = useState<Priority>(Priority.NONE);
   const [dueDate, setDueDate] = useState('');
   const [estimatedTime, setEstimatedTime] = useState('');
+  const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  const { addTag, tags: allTags } = useTags({ autoFetch: true });
 
   // Sync form with task
   useEffect(() => {
@@ -69,6 +75,7 @@ export function TaskDetailModal({
       setPriority(task.priority);
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
       setEstimatedTime(task.estimatedTime ? String(task.estimatedTime) : '');
+      setSelectedTagIds(task.tags?.map((tag) => tag.id) || []);
     }
   }, [task]);
 
@@ -77,6 +84,21 @@ export function TaskDetailModal({
 
     setIsSaving(true);
     try {
+      // Build the full tag objects from selectedTagIds for type compatibility
+      // Include tags from the current task and from the full tag list (for newly created tags)
+      const selectedTagObjects: Array<{ id: string; name: string; color: string | null }> = [];
+      for (const tagId of selectedTagIds) {
+        const existingTag = task.tags.find((t) => t.id === tagId);
+        if (existingTag) {
+          selectedTagObjects.push(existingTag);
+        } else {
+          const allTag = allTags.find((t) => t.id === tagId);
+          if (allTag) {
+            selectedTagObjects.push({ id: allTag.id, name: allTag.name, color: allTag.color });
+          }
+        }
+      }
+
       await onSave(task.id, {
         title: title.trim(),
         description: description.trim() || null,
@@ -84,12 +106,20 @@ export function TaskDetailModal({
         priority,
         dueDate: dueDate ? new Date(dueDate) : null,
         estimatedTime: estimatedTime ? parseInt(estimatedTime, 10) : null,
+        tags: selectedTagObjects,
       });
       onClose();
     } finally {
       setIsSaving(false);
     }
   };
+
+  const handleCreateTag = useCallback(
+    async (name: string, color?: string | null): Promise<TagDto | null> => {
+      return await addTag(name, { color });
+    },
+    [addTag]
+  );
 
   const handleDelete = () => {
     if (task && onDelete) {
@@ -101,13 +131,20 @@ export function TaskDetailModal({
 
   if (!task) return null;
 
+  const currentTagIds = task.tags?.map((tag) => tag.id).sort() || [];
+  const newTagIds = [...selectedTagIds].sort();
+  const tagsChanged =
+    currentTagIds.length !== newTagIds.length ||
+    currentTagIds.some((id, index) => id !== newTagIds[index]);
+
   const hasChanges =
     title.trim() !== task.title ||
     description.trim() !== (task.description || '') ||
     status !== task.status ||
     priority !== task.priority ||
     dueDate !== (task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '') ||
-    estimatedTime !== (task.estimatedTime ? String(task.estimatedTime) : '');
+    estimatedTime !== (task.estimatedTime ? String(task.estimatedTime) : '') ||
+    tagsChanged;
 
   return (
     <Modal
@@ -189,6 +226,17 @@ export function TaskDetailModal({
             placeholder="Add a description..."
             rows={4}
             className="w-full px-4 py-3 bg-background-card border border-border-subtle rounded-lg text-text-primary placeholder:text-text-tertiary focus:border-primary outline-none transition-all duration-200 resize-none"
+          />
+        </div>
+
+        {/* Tags */}
+        <div>
+          <TagPicker
+            selectedTagIds={selectedTagIds}
+            onChange={setSelectedTagIds}
+            placeholder="Add tags..."
+            allowCreate
+            onCreateTag={handleCreateTag}
           />
         </div>
 

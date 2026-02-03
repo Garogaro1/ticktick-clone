@@ -5,6 +5,7 @@ import { TaskStatus, Priority } from '@prisma/client';
 import { TaskItem } from './TaskItem';
 import { AddTaskInput } from './AddTaskInput';
 import { Spinner } from '@/components/ui/Spinner';
+import { TagBadge } from '@/components/tags';
 import { cn } from '@/lib/utils';
 import type { TaskDto } from '@/lib/tasks/types';
 
@@ -18,6 +19,8 @@ export interface TaskListProps {
   ) => Promise<boolean>;
   onDeleteTask?: (id: string) => void;
   onEditTask?: (task: TaskDto) => void;
+  activeTag?: { id: string; name: string; color: string | null } | null;
+  onClearTagFilter?: () => void;
   className?: string;
 }
 
@@ -64,6 +67,8 @@ export function TaskList({
   onUpdateTask,
   onDeleteTask,
   onEditTask,
+  activeTag,
+  onClearTagFilter,
   className,
 }: TaskListProps) {
   const [filter, setFilter] = useState<TaskFilter>('all');
@@ -135,23 +140,52 @@ export function TaskList({
     <div className={cn('flex flex-col gap-6', className)}>
       {/* Header with filters and sort */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        {/* Filter tabs */}
-        <div className="flex items-center gap-1 bg-background-secondary rounded-lg p-1">
-          {filterButtons.map(({ value, label, count }) => (
-            <button
-              key={value}
-              onClick={() => setFilter(value)}
-              className={cn(
-                'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
-                filter === value
-                  ? 'bg-background-card text-text-primary shadow-sm'
-                  : 'text-text-secondary hover:text-text-primary'
-              )}
-            >
-              {label}
-              <span className="ml-1.5 text-text-tertiary">{count(tasks)}</span>
-            </button>
-          ))}
+        {/* Filter tabs with active tag indicator */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex items-center gap-1 bg-background-secondary rounded-lg p-1">
+            {filterButtons.map(({ value, label, count }) => (
+              <button
+                key={value}
+                onClick={() => setFilter(value)}
+                className={cn(
+                  'px-4 py-2 rounded-md text-sm font-medium transition-all duration-200',
+                  filter === value
+                    ? 'bg-background-card text-text-primary shadow-sm'
+                    : 'text-text-secondary hover:text-text-primary'
+                )}
+              >
+                {label}
+                <span className="ml-1.5 text-text-tertiary">{count(tasks)}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Active tag filter indicator */}
+          {activeTag && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-text-tertiary">Tag:</span>
+              <button
+                onClick={onClearTagFilter}
+                className="flex items-center gap-1.5 px-2 py-1 rounded-full bg-background-card border border-border-subtle hover:border-border-default transition-all duration-200 group"
+              >
+                <TagBadge tag={activeTag} variant="compact" />
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-text-tertiary group-hover:text-text-primary transition-colors"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sort dropdown */}
@@ -203,12 +237,18 @@ export function TaskList({
             </svg>
           </div>
           <h3 className="text-lg font-semibold text-text-primary mb-1">
-            {filter === 'completed' ? 'No completed tasks yet' : 'No tasks yet'}
+            {activeTag
+              ? 'No tasks with this tag'
+              : filter === 'completed'
+                ? 'No completed tasks yet'
+                : 'No tasks yet'}
           </h3>
           <p className="text-text-secondary">
-            {filter === 'completed'
-              ? 'Complete a task to see it here'
-              : 'Add a task to get started'}
+            {activeTag
+              ? `Try selecting a different tag or clear the filter`
+              : filter === 'completed'
+                ? 'Complete a task to see it here'
+                : 'Add a task to get started'}
           </p>
         </div>
       )}
