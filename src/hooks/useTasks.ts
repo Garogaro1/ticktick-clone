@@ -9,7 +9,11 @@ export interface UseTasksOptions {
     status?: string;
     priority?: string;
     listId?: string;
+    tagId?: string;
     search?: string;
+    dueDate?: string;
+    dueBefore?: string;
+    dueAfter?: string;
   };
 }
 
@@ -41,7 +45,11 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksResult {
     if (filter.status) params.set('status', filter.status);
     if (filter.priority) params.set('priority', filter.priority);
     if (filter.listId) params.set('listId', filter.listId);
+    if (filter.tagId) params.set('tagId', filter.tagId);
     if (filter.search) params.set('search', filter.search);
+    if (filter.dueDate) params.set('dueDate', filter.dueDate);
+    if (filter.dueBefore) params.set('dueBefore', filter.dueBefore);
+    if (filter.dueAfter) params.set('dueAfter', filter.dueAfter);
     return params.toString();
   };
 

@@ -158,3 +158,27 @@ export function endOfDay(date: Date): Date {
   result.setHours(23, 59, 59, 999);
   return result;
 }
+
+/**
+ * Add days to a date.
+ *
+ * @param date - Date to add days to
+ * @param days - Number of days to add (can be negative)
+ * @returns New Date with days added
+ */
+export function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+/**
+ * Add weeks to a date.
+ *
+ * @param date - Date to add weeks to
+ * @param weeks - Number of weeks to add (can be negative)
+ * @returns New Date with weeks added
+ */
+export function addWeeks(date: Date, weeks: number): Date {
+  return addDays(date, weeks * 7);
+}

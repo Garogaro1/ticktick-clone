@@ -1,34 +1,127 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { TaskList, TaskDetailModal } from '@/components/tasks';
 import { ListSidebar } from '@/components/lists';
+import { SmartListSidebar } from '@/components/smart-lists';
+import { AdvancedFilterPanel, SavedFiltersModal } from '@/components/filters';
 import { useTasks } from '@/hooks/useTasks';
+import { useLists } from '@/hooks/useLists';
+import { getSmartListFilter, type SmartListType } from '@/lib/smart-lists';
+import type { TaskFilter } from '@/components/filters';
+import type { SavedFilter } from '@/lib/filters/types';
+import { cn } from '@/lib/utils';
 
 /**
- * Tasks Page - Main task management interface with list navigation.
+ * Tasks Page - Main task management interface with smart lists and advanced filtering.
  *
  * Features:
- * - Sidebar with lists navigation
+ * - Smart Lists navigation (Today, Tomorrow, Next 7 Days, etc.)
+ * - User Lists navigation
+ * - Advanced filtering (status, priority, list, tags, date range)
+ * - Saved custom filters
  * - Task list with filtering and sorting
  * - Add new tasks
  * - Edit task details
  * - Delete tasks
- * - Filter tasks by selected list
  * - Warm Claude theme styling
  */
 export default function TasksPage() {
+  // Navigation state
+  const [activeTab, setActiveTab] = useState<'smart' | 'lists'>('smart');
+  const [selectedSmartList, setSelectedSmartList] = useState<SmartListType>('all');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
+
+  // Advanced filter state
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [advancedFilter, setAdvancedFilter] = useState<TaskFilter>({});
+  const [showSavedFilters, setShowSavedFilters] = useState(false);
+
+  // Data hooks
+  const { lists } = useLists({ autoFetch: true });
+
+  // Transform lists for filter panel (convert null icon to undefined)
+  const listsForFilter = useMemo(
+    () =>
+      lists.map((list) => ({
+        id: list.id,
+        title: list.title,
+        icon: list.icon ?? undefined,
+      })),
+    [lists]
+  );
+
+  // Build filter for useTasks based on current selection
+  const taskFilter = useMemo(() => {
+    const baseFilter: Record<string, string | undefined> = {};
+
+    // Apply smart list filter
+    if (activeTab === 'smart' && selectedSmartList !== 'all') {
+      const smartFilter = getSmartListFilter(selectedSmartList);
+      Object.assign(baseFilter, smartFilter);
+    }
+
+    // Apply list filter
+    if (activeTab === 'lists' && selectedListId) {
+      baseFilter.listId = selectedListId;
+    }
+
+    // Apply advanced filters
+    if (advancedFilter.status) {
+      const status = Array.isArray(advancedFilter.status)
+        ? advancedFilter.status.join(',')
+        : advancedFilter.status;
+      baseFilter.status = status;
+    }
+    if (advancedFilter.priority) {
+      const priority = Array.isArray(advancedFilter.priority)
+        ? advancedFilter.priority.join(',')
+        : advancedFilter.priority;
+      baseFilter.priority = priority;
+    }
+    if (advancedFilter.listId) {
+      baseFilter.listId = advancedFilter.listId;
+    }
+    if (advancedFilter.tagIds && advancedFilter.tagIds.length > 0) {
+      baseFilter.tagId = advancedFilter.tagIds.join(',');
+    }
+    if (advancedFilter.dueDateFrom) {
+      baseFilter.dueAfter = advancedFilter.dueDateFrom;
+    }
+    if (advancedFilter.dueDateTo) {
+      baseFilter.dueBefore = advancedFilter.dueDateTo;
+    }
+    if (advancedFilter.search) {
+      baseFilter.search = advancedFilter.search;
+    }
+
+    return Object.keys(baseFilter).length > 0 ? baseFilter : undefined;
+  }, [activeTab, selectedSmartList, selectedListId, advancedFilter]);
+
   const { tasks, isLoading, error, addTask, updateTask, deleteTask } = useTasks({
     autoFetch: true,
-    filter: selectedListId ? { listId: selectedListId } : undefined,
+    filter: taskFilter,
   });
 
+  // Task detail state
   const [selectedTask, setSelectedTask] = useState<
     Awaited<ReturnType<typeof useTasks>>['tasks'][number] | null
   >(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Count active filters
+  const activeFilterCount = useMemo(() => {
+    return Object.keys(advancedFilter).filter(
+      (key) =>
+        advancedFilter[key as keyof TaskFilter] !== undefined &&
+        advancedFilter[key as keyof TaskFilter] !== '' &&
+        (Array.isArray(advancedFilter[key as keyof TaskFilter])
+          ? (advancedFilter[key as keyof TaskFilter] as unknown[]).length > 0
+          : true)
+    ).length;
+  }, [advancedFilter]);
+
+  // Handlers
   const handleAddTask = async (title: string) => {
     const result = await addTask(title);
     if (!result) {
@@ -59,10 +152,96 @@ export default function TasksPage() {
     setSelectedTask(null);
   };
 
+  const handleApplyAdvancedFilter = (filter: TaskFilter) => {
+    setAdvancedFilter(filter);
+    // Switch to smart list "all" to apply custom filters
+    setActiveTab('smart');
+    setSelectedSmartList('all');
+  };
+
+  const handleClearAdvancedFilter = () => {
+    setAdvancedFilter({});
+  };
+
+  const handleSelectSavedFilter = (savedFilter: SavedFilter) => {
+    setAdvancedFilter(savedFilter.filter);
+    setActiveTab('smart');
+    setSelectedSmartList('all');
+  };
+
+  const handleTabChange = (tab: 'smart' | 'lists') => {
+    setActiveTab(tab);
+    // Clear advanced filter when switching tabs
+    setAdvancedFilter({});
+  };
+
+  // Get current view title
+  const viewTitle = useMemo(() => {
+    if (activeTab === 'smart') {
+      if (selectedSmartList === 'all') {
+        return activeFilterCount > 0 ? 'Filtered Tasks' : 'All Tasks';
+      }
+      const titles: Record<SmartListType, string> = {
+        all: 'All Tasks',
+        today: 'Today',
+        tomorrow: 'Tomorrow',
+        next7Days: 'Next 7 Days',
+        overdue: 'Overdue',
+        noDate: 'No Date',
+        completed: 'Completed',
+      };
+      return titles[selectedSmartList];
+    }
+    const list = lists.find((l) => l.id === selectedListId);
+    return list?.title || 'All Tasks';
+  }, [activeTab, selectedSmartList, selectedListId, lists, activeFilterCount]);
+
   return (
     <div className="flex h-screen bg-background-main overflow-hidden">
       {/* Sidebar */}
-      <ListSidebar activeListId={selectedListId} onSelectList={setSelectedListId} />
+      <div className="w-56 bg-background-card border-r border-border flex flex-col">
+        {/* Tab Switcher */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => handleTabChange('smart')}
+            className={cn(
+              'flex-1 py-3 text-sm font-medium transition-colors duration-200',
+              activeTab === 'smart'
+                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                : 'text-text-secondary hover:text-text-primary'
+            )}
+          >
+            Smart
+          </button>
+          <button
+            onClick={() => handleTabChange('lists')}
+            className={cn(
+              'flex-1 py-3 text-sm font-medium transition-colors duration-200',
+              activeTab === 'lists'
+                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                : 'text-text-secondary hover:text-text-primary'
+            )}
+          >
+            Lists
+          </button>
+        </div>
+
+        {/* Sidebar Content */}
+        <div className="flex-1 overflow-hidden">
+          {activeTab === 'smart' ? (
+            <SmartListSidebar
+              activeSmartList={selectedSmartList}
+              onSelectSmartList={setSelectedSmartList}
+            />
+          ) : (
+            <ListSidebar
+              activeListId={selectedListId}
+              onSelectList={setSelectedListId}
+              className="border-none"
+            />
+          )}
+        </div>
+      </div>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
@@ -86,7 +265,69 @@ export default function TasksPage() {
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                   </svg>
                 </div>
-                <h1 className="text-xl font-semibold text-text-primary">My Tasks</h1>
+                <h1 className="text-xl font-semibold text-text-primary">{viewTitle}</h1>
+              </div>
+
+              {/* Filter Actions */}
+              <div className="flex items-center gap-2">
+                {/* Advanced Filter Button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+                    className={cn(
+                      'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      activeFilterCount > 0
+                        ? 'bg-primary/10 text-primary'
+                        : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary'
+                    )}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
+                    </svg>
+                    <span>Filter</span>
+                    {activeFilterCount > 0 && (
+                      <span className="w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Advanced Filter Panel */}
+                  <AdvancedFilterPanel
+                    isOpen={showAdvancedFilter}
+                    onClose={() => setShowAdvancedFilter(false)}
+                    onApply={handleApplyAdvancedFilter}
+                    onClear={handleClearAdvancedFilter}
+                    currentFilter={advancedFilter}
+                    lists={listsForFilter}
+                  />
+                </div>
+
+                {/* Saved Filters Button */}
+                <button
+                  onClick={() => setShowSavedFilters(true)}
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-background-secondary transition-all duration-200"
+                  title="Saved filters"
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                  </svg>
+                  <span>Saved</span>
+                </button>
               </div>
             </div>
           </div>
@@ -139,6 +380,14 @@ export default function TasksPage() {
         }}
         onSave={handleSaveTask}
         onDelete={handleDeleteTask}
+      />
+
+      {/* Saved Filters Modal */}
+      <SavedFiltersModal
+        isOpen={showSavedFilters}
+        onClose={() => setShowSavedFilters(false)}
+        onSelectFilter={handleSelectSavedFilter}
+        currentFilter={advancedFilter}
       />
     </div>
   );

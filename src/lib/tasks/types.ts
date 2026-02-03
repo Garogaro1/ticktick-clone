@@ -8,6 +8,9 @@
 import { Task, TaskStatus, Priority } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
 
+// Re-export Prisma enums for use in other modules
+export type { TaskStatus, Priority };
+
 /**
  * Tag DTO for task responses.
  */
