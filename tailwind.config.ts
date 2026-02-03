@@ -8,6 +8,15 @@ const config: Config = {
   ],
   darkMode: 'class',
   theme: {
+    screens: {
+      // Mobile-first breakpoints
+      xs: '375px', // Small phones
+      sm: '640px', // Large phones
+      md: '768px', // Tablets
+      lg: '1024px', // Small laptops
+      xl: '1280px', // Laptops
+      '2xl': '1536px', // Large screens
+    },
     extend: {
       borderWidth: {
         3: '3px',
@@ -54,6 +63,18 @@ const config: Config = {
         200: '200ms',
         300: '300ms',
         400: '400ms',
+      },
+      minHeight: {
+        '16': '4rem', // 64px - minimum tap target
+        '12': '3rem', // 48px - comfortable tap target
+        '11': '2.75rem', // 44px - WCAG recommended minimum
+      },
+      zIndex: {
+        '60': '60',
+        '70': '70',
+        '80': '80',
+        '90': '90',
+        '100': '100',
       },
     },
   },

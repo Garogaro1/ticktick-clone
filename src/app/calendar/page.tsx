@@ -14,6 +14,7 @@ import { TaskDetailModal } from '@/components/tasks/TaskDetailModal';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { MobileNav, getDefaultNavItems } from '@/components/mobile';
 import type { CalendarEvent } from '@/lib/calendar/types';
 import type { TaskDto } from '@/lib/tasks/types';
 import { formatDateFull } from '@/lib/utils/date';
@@ -29,6 +30,7 @@ import { formatDateFull } from '@/lib/utils/date';
  * - Go to today button
  * - View switcher for changing views
  * - Today indicator in time views
+ * - Mobile responsive with bottom nav
  * - Warm Claude theme styling
  */
 export default function CalendarPage() {
@@ -174,46 +176,83 @@ export default function CalendarPage() {
     clearSelection();
   };
 
+  // Navigation items for bottom nav
+  const navItems = useMemo(() => getDefaultNavItems(), []);
+
   return (
-    <div className="min-h-screen bg-background-main">
+    <div className="min-h-screen bg-background-main pb-16 md:pb-0">
       {/* Header */}
       <header className="bg-background-main/80 backdrop-blur-md border-b border-border-subtle sticky top-0 z-10">
-        <div className="px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+        <div className="px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
-                  <line x1="16" y1="2" x2="16" y2="6" />
-                  <line x1="8" y1="2" x2="8" y2="6" />
-                  <line x1="3" y1="10" x2="21" y2="10" />
-                </svg>
+              {/* Calendar Icon - larger on mobile for tap target */}
+              <div className="min-h-11 min-w-11 flex items-center justify-center">
+                <div className="w-8 h-8 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
               </div>
-              <h1 className="text-xl font-semibold text-text-primary">Calendar</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-text-primary truncate">
+                Calendar
+              </h1>
             </div>
 
-            {/* Calendar link */}
+            {/* Calendar link - hidden on mobile, icon on tablet */}
             <a
               href="/tasks"
-              className="text-sm text-text-secondary hover:text-text-primary transition-colors"
+              className="hidden sm:flex text-sm text-text-secondary hover:text-text-primary transition-colors items-center gap-1 min-h-11 px-3"
             >
-              View as List
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
+              <span>List</span>
+            </a>
+            {/* Icon-only link on mobile */}
+            <a
+              href="/tasks"
+              className="sm:hidden min-h-11 min-w-11 flex items-center justify-center text-text-secondary hover:text-text-primary"
+              aria-label="View as list"
+            >
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+              </svg>
             </a>
           </div>
         </div>
       </header>
 
       {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
         {/* Error display */}
         {error && (
           <div className="mb-6 p-4 bg-error/10 border border-error/30 rounded-lg text-error">
@@ -236,7 +275,7 @@ export default function CalendarPage() {
         )}
 
         {/* Calendar header with navigation and view switcher */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
           <CalendarHeader
             currentMonth={currentDate}
             onPreviousMonth={goToPrevious}
@@ -256,30 +295,34 @@ export default function CalendarPage() {
 
         {/* Calendar views */}
         {view === 'month' && monthViewData && (
-          <MonthCalendar
-            monthViewData={monthViewData}
-            selectedDate={selectedDate}
-            onPreviousMonth={goToPrevious}
-            onNextMonth={goToNext}
-            onToday={goToToday}
-            onDateClick={handleDateClick}
-            onTaskClick={handleTaskClick}
-            onTaskDrop={handleTaskDrop}
-            title={viewTitle}
-          />
+          <div className="overflow-x-auto -mx-2 sm:mx-0 px-2 sm:px-0">
+            <MonthCalendar
+              monthViewData={monthViewData}
+              selectedDate={selectedDate}
+              onPreviousMonth={goToPrevious}
+              onNextMonth={goToNext}
+              onToday={goToToday}
+              onDateClick={handleDateClick}
+              onTaskClick={handleTaskClick}
+              onTaskDrop={handleTaskDrop}
+              title={viewTitle}
+            />
+          </div>
         )}
 
         {view === 'week' && (
-          <WeekCalendar
-            weekViewData={weekViewData}
-            isLoading={isLoading}
-            error={error}
-            onTimeSlotClick={handleTimeSlotClick}
-            onEventClick={handleTaskClick}
-            startHour={6}
-            endHour={22}
-            hourHeight={50}
-          />
+          <div className="overflow-x-auto -mx-2 sm:mx-0">
+            <WeekCalendar
+              weekViewData={weekViewData}
+              isLoading={isLoading}
+              error={error}
+              onTimeSlotClick={handleTimeSlotClick}
+              onEventClick={handleTaskClick}
+              startHour={6}
+              endHour={22}
+              hourHeight={50}
+            />
+          </div>
         )}
 
         {view === 'day' && (
@@ -297,7 +340,7 @@ export default function CalendarPage() {
 
         {/* Empty state */}
         {!isLoading && tasks.length === 0 && (
-          <div className="text-center py-12">
+          <div className="text-center py-12 px-4">
             <svg
               className="mx-auto h-12 w-12 text-text-tertiary mb-4"
               viewBox="0 0 24 24"
@@ -311,7 +354,7 @@ export default function CalendarPage() {
               <line x1="3" y1="10" x2="21" y2="10" />
             </svg>
             <h3 className="text-lg font-medium text-text-primary mb-2">No tasks yet</h3>
-            <p className="text-text-secondary">
+            <p className="text-text-secondary text-sm sm:text-base">
               Click on any date to add your first task, or go to the{' '}
               <a href="/tasks" className="text-primary hover:underline">
                 Tasks page
@@ -321,6 +364,11 @@ export default function CalendarPage() {
           </div>
         )}
       </main>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0">
+        <MobileNav items={navItems} position="bottom" />
+      </div>
 
       {/* Task detail modal */}
       <TaskDetailModal
@@ -336,8 +384,8 @@ export default function CalendarPage() {
 
       {/* Add task modal */}
       <Modal isOpen={isAddModalOpen} onClose={handleCloseAddModal}>
-        <div className="p-6">
-          <h2 className="text-xl font-semibold text-text-primary mb-4">
+        <div className="p-4 sm:p-6 max-w-md w-full mx-auto">
+          <h2 className="text-lg sm:text-xl font-semibold text-text-primary mb-4">
             Add Task for {selectedDate ? formatDateFull(selectedDate) : ''}
           </h2>
 

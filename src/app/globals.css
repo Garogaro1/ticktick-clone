@@ -9,12 +9,12 @@
  * throughout the application for consistent styling.
  */
 
-@import "../styles/tokens/colors.css";
-@import "../styles/tokens/typography.css";
-@import "../styles/tokens/spacing.css";
-@import "../styles/tokens/shadows.css";
-@import "../styles/tokens/radius.css";
-@import "../styles/tokens/animation.css";
+@import '../styles/tokens/colors.css';
+@import '../styles/tokens/typography.css';
+@import '../styles/tokens/spacing.css';
+@import '../styles/tokens/shadows.css';
+@import '../styles/tokens/radius.css';
+@import '../styles/tokens/animation.css';
 
 /**
  * Base Styles
@@ -22,5 +22,83 @@
  * Import CSS reset and base element styles for consistent styling.
  */
 
-@import "../styles/base/reset.css";
-@import "../styles/base/base.css";
+@import '../styles/base/reset.css';
+@import '../styles/base/base.css';
+
+/**
+ * Mobile Responsive Utilities
+ *
+ * Safe area insets for iOS devices with notches.
+ * Touch-friendly tap targets.
+ */
+
+/* Safe area insets for iOS devices */
+@supports (padding: max(0px)) {
+  .safe-area-inset-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+  }
+
+  .safe-area-inset-top {
+    padding-top: max(env(safe-area-inset-top), 0px);
+  }
+
+  .safe-area-inset-left {
+    padding-left: max(env(safe-area-inset-left), 0px);
+  }
+
+  .safe-area-inset-right {
+    padding-right: max(env(safe-area-inset-right), 0px);
+  }
+
+  .safe-area-inset-all {
+    padding: max(env(safe-area-inset-top), 0px) max(env(safe-area-inset-right), 0px)
+      max(env(safe-area-inset-bottom), 0px) max(env(safe-area-inset-left), 0px);
+  }
+}
+
+/* Prevent tap highlight on mobile */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ensure touch-friendly tap targets */
+button,
+a,
+input,
+select,
+textarea,
+[role='button'] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Override for smaller inline elements when needed */
+button.inline-tap-target,
+a.inline-tap-target,
+.small-tap-target {
+  min-height: auto;
+  min-width: auto;
+}
+
+/* Smooth scrolling on mobile */
+html {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent horizontal bounce on mobile */
+body {
+  overscroll-behavior-x: none;
+}
+
+/* Text size adjustment for mobile (prevent auto-zoom on input focus) */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='tel'],
+input[type='url'],
+input[type='search'],
+textarea,
+select {
+  font-size: 16px;
+}

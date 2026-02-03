@@ -5,6 +5,8 @@ import { TaskList, TaskDetailModal } from '@/components/tasks';
 import { ListSidebar } from '@/components/lists';
 import { SmartListSidebar } from '@/components/smart-lists';
 import { AdvancedFilterPanel, SavedFiltersModal } from '@/components/filters';
+import { MobileSheet } from '@/components/ui/MobileSheet';
+import { HamburgerButton, MobileNav, getDefaultNavItems } from '@/components/mobile';
 import { useTasks, type SortBy, type SortOrder } from '@/hooks/useTasks';
 import { useLists } from '@/hooks/useLists';
 import { useSortPreferences } from '@/hooks/useSortPreferences';
@@ -25,6 +27,7 @@ import { cn } from '@/lib/utils';
  * - Add new tasks
  * - Edit task details
  * - Delete tasks
+ * - Mobile responsive with hamburger menu and bottom nav
  * - Warm Claude theme styling
  */
 export default function TasksPage() {
@@ -32,6 +35,9 @@ export default function TasksPage() {
   const [activeTab, setActiveTab] = useState<'smart' | 'lists'>('smart');
   const [selectedSmartList, setSelectedSmartList] = useState<SmartListType>('all');
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
+
+  // Mobile sidebar state
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Advanced filter state
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
@@ -210,10 +216,13 @@ export default function TasksPage() {
     return list?.title || 'All Tasks';
   }, [activeTab, selectedSmartList, selectedListId, lists, activeFilterCount]);
 
+  // Navigation items for bottom nav
+  const navItems = useMemo(() => getDefaultNavItems(), []);
+
   return (
     <div className="flex h-screen bg-background-main overflow-hidden">
-      {/* Sidebar */}
-      <div className="w-56 bg-background-card border-r border-border flex flex-col">
+      {/* Desktop Sidebar */}
+      <div className="hidden md:flex md:w-56 lg:w-64 bg-background-card border-r border-border flex-col">
         {/* Tab Switcher */}
         <div className="flex border-b border-border">
           <button
@@ -257,14 +266,82 @@ export default function TasksPage() {
         </div>
       </div>
 
+      {/* Mobile Sidebar Sheet */}
+      <MobileSheet
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+        side="left"
+        maxWidth="280px"
+      >
+        {/* Tab Switcher */}
+        <div className="flex border-b border-border">
+          <button
+            onClick={() => {
+              handleTabChange('smart');
+            }}
+            className={cn(
+              'flex-1 py-3 text-sm font-medium transition-colors duration-200',
+              activeTab === 'smart'
+                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                : 'text-text-secondary hover:text-text-primary'
+            )}
+          >
+            Smart
+          </button>
+          <button
+            onClick={() => {
+              handleTabChange('lists');
+            }}
+            className={cn(
+              'flex-1 py-3 text-sm font-medium transition-colors duration-200',
+              activeTab === 'lists'
+                ? 'text-primary border-b-2 border-primary bg-primary/5'
+                : 'text-text-secondary hover:text-text-primary'
+            )}
+          >
+            Lists
+          </button>
+        </div>
+
+        {/* Sidebar Content */}
+        <div className="flex-1 overflow-y-auto">
+          {activeTab === 'smart' ? (
+            <SmartListSidebar
+              activeSmartList={selectedSmartList}
+              onSelectSmartList={(list) => {
+                setSelectedSmartList(list);
+                setIsMobileSidebarOpen(false);
+              }}
+            />
+          ) : (
+            <ListSidebar
+              activeListId={selectedListId}
+              onSelectList={(id) => {
+                setSelectedListId(id);
+                setIsMobileSidebarOpen(false);
+              }}
+              className="border-none"
+            />
+          )}
+        </div>
+      </MobileSheet>
+
       {/* Main content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
         <header className="shrink-0 bg-background-main/80 backdrop-blur-md border-b border-border-subtle">
-          <div className="px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-14 sm:h-16">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                {/* Mobile Hamburger */}
+                <HamburgerButton
+                  isOpen={isMobileSidebarOpen}
+                  onToggle={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+                  className="md:hidden"
+                />
+
+                {/* Logo - hidden on mobile */}
+                <div className="hidden sm:block w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                   <svg
                     width="20"
                     height="20"
@@ -279,17 +356,20 @@ export default function TasksPage() {
                     <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                   </svg>
                 </div>
-                <h1 className="text-xl font-semibold text-text-primary">{viewTitle}</h1>
+                <h1 className="text-lg sm:text-xl font-semibold text-text-primary truncate max-w-[150px] sm:max-w-none">
+                  {viewTitle}
+                </h1>
               </div>
 
               {/* Filter Actions */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 {/* Advanced Filter Button */}
                 <div className="relative">
                   <button
                     onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
                     className={cn(
-                      'flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      'flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200',
+                      'min-h-11', // 44px tap target
                       activeFilterCount > 0
                         ? 'bg-primary/10 text-primary'
                         : 'text-text-secondary hover:text-text-primary hover:bg-background-secondary'
@@ -305,7 +385,7 @@ export default function TasksPage() {
                     >
                       <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
                     </svg>
-                    <span>Filter</span>
+                    <span className="hidden sm:inline">Filter</span>
                     {activeFilterCount > 0 && (
                       <span className="w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center">
                         {activeFilterCount}
@@ -327,7 +407,11 @@ export default function TasksPage() {
                 {/* Saved Filters Button */}
                 <button
                   onClick={() => setShowSavedFilters(true)}
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-background-secondary transition-all duration-200"
+                  className={cn(
+                    'flex items-center justify-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-2 rounded-lg text-sm font-medium',
+                    'text-text-secondary hover:text-text-primary hover:bg-background-secondary',
+                    'transition-all duration-200 min-h-11' // 44px tap target
+                  )}
                   title="Saved filters"
                 >
                   <svg
@@ -340,7 +424,7 @@ export default function TasksPage() {
                   >
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
-                  <span>Saved</span>
+                  <span className="hidden sm:inline">Saved</span>
                 </button>
               </div>
             </div>
@@ -348,8 +432,8 @@ export default function TasksPage() {
         </header>
 
         {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex-1 overflow-y-auto pb-20 md:pb-0">
+          <div className="max-w-4xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-8">
             {/* Error display */}
             {error && (
               <div className="mb-6 p-4 bg-error/10 border border-error/30 rounded-lg text-error">
@@ -387,6 +471,11 @@ export default function TasksPage() {
           </div>
         </div>
       </main>
+
+      {/* Bottom Navigation - Mobile Only */}
+      <div className="md:hidden">
+        <MobileNav items={navItems} position="bottom" />
+      </div>
 
       {/* Task detail modal */}
       <TaskDetailModal
