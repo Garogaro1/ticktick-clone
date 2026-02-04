@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getPomodoroStatistics } from '@/lib/pomodoro/service';
 import { StatisticsQuerySchema } from '@/lib/pomodoro/schemas';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ statistics });
   } catch (error) {
-    console.error('Error fetching Pomodoro statistics:', error);
+    logger.error('Error fetching Pomodoro statistics', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to fetch Pomodoro statistics',

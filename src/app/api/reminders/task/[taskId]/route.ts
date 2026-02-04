@@ -7,6 +7,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getRemindersByTaskId } from '@/lib/reminders/service';
+import { logger } from '@/lib/logger';
 
 type RouteContext = {
   params: Promise<{ taskId: string }>;
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ reminders });
   } catch (error) {
-    console.error('Error fetching task reminders:', error);
+    logger.error('Error fetching task reminders', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to fetch reminders',

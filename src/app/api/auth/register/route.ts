@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { hashPassword } from '@/lib/auth';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 /**
  * Validation schema for registration request body.
@@ -74,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
-    console.error('Registration error:', error);
+    logger.error('Registration error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

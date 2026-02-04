@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getGoalById, updateGoalProgress } from '@/lib/goals';
 import { updateGoalProgressSchema } from '@/lib/goals/schemas';
+import { logger } from '@/lib/logger';
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ goal });
   } catch (error) {
-    console.error('Error updating goal progress:', error);
+    logger.error('Error updating goal progress', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Failed to update goal progress' }, { status: 500 });
   }
 }

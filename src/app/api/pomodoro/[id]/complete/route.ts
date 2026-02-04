@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { completePomodoroSession } from '@/lib/pomodoro/service';
 import { CompletePomodoroSchema } from '@/lib/pomodoro/schemas';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     return NextResponse.json({ session: pomodoroSession });
   } catch (error) {
-    console.error('Error completing Pomodoro session:', error);
+    logger.error('Error completing Pomodoro session', error instanceof Error ? error : undefined);
 
     if (error instanceof Error && error.message === 'Pomodoro session not found') {
       return NextResponse.json({ error: error.message }, { status: 404 });

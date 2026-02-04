@@ -15,6 +15,7 @@ import {
   type ListCreateResponse,
 } from '@/lib/lists';
 import { Prisma } from '@prisma/client';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/lists
@@ -98,7 +99,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Lists GET error:', error);
+    logger.error('Lists GET error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
     const response: ListCreateResponse = { list };
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
-    console.error('List creation error:', error);
+    logger.error('List creation error:', error instanceof Error ? error : new Error(String(error)));
 
     // Handle specific errors
     if (error instanceof Error) {

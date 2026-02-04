@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { batchDeleteHabits, batchToggleHabits } from '@/lib/habits';
 import { batchDeleteHabitsSchema, batchToggleHabitsSchema } from '@/lib/habits/schemas';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -59,7 +60,10 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('Error processing batch habits:', error);
+    logger.error(
+      'Error processing batch habits:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to process batch operation' }, { status: 500 });
   }
 }

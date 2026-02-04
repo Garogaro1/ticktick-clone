@@ -15,6 +15,7 @@ import {
   type TaskCreateResponse,
 } from '@/lib/tasks';
 import { Prisma } from '@prisma/client';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/tasks
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Tasks GET error:', error);
+    logger.error('Tasks GET error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
     const response: TaskCreateResponse = { task };
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
-    console.error('Task creation error:', error);
+    logger.error('Task creation error', error instanceof Error ? error : undefined);
 
     // Handle specific Prisma errors
     if (error instanceof Error) {

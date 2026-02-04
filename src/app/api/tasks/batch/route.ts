@@ -13,6 +13,7 @@ import {
   type BatchUpdateResponse,
   type BatchDeleteResponse,
 } from '@/lib/tasks';
+import { logger } from '@/lib/logger';
 
 /**
  * POST /api/tasks/batch
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest) {
       { status: 400 }
     );
   } catch (error) {
-    console.error('Batch operation error:', error);
+    logger.error('Batch operation error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

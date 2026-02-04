@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getHabits, createHabit } from '@/lib/habits';
 import { createHabitSchema, habitQuerySchema } from '@/lib/habits/schemas';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +36,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching habits:', error);
+    logger.error(
+      'Error fetching habits:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to fetch habits' }, { status: 500 });
   }
 }
@@ -63,7 +67,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ habit }, { status: 201 });
   } catch (error) {
-    console.error('Error creating habit:', error);
+    logger.error(
+      'Error creating habit:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to create habit' }, { status: 500 });
   }
 }

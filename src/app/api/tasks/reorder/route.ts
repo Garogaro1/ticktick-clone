@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { reorderTasks } from '@/lib/tasks/service';
 import { z } from 'zod';
+import { logger } from '@/lib/logger';
 
 // Validation schema for reorder request
 const ReorderSchema = z.object({
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ tasks });
   } catch (error) {
-    console.error('Tasks reorder error:', error);
+    logger.error('Tasks reorder error', error instanceof Error ? error : undefined);
 
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });

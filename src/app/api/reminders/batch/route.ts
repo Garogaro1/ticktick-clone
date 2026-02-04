@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { deleteReminders, dismissReminder, markReminderSent } from '@/lib/reminders/service';
 import { BatchReminderSchema } from '@/lib/reminders/schemas';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       reminders: operation === 'delete' ? undefined : reminders,
     });
   } catch (error) {
-    console.error('Error performing batch operation:', error);
+    logger.error('Error performing batch operation', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to perform batch operation',

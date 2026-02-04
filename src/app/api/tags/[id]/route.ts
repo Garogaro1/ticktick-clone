@@ -11,6 +11,7 @@ import { auth } from '@/lib/auth';
 import { getTagById, updateTag, deleteTag } from '@/lib/tags/service';
 import { UpdateTagSchema } from '@/lib/tags/schemas';
 import type { TagUpdateResponse, TagDeleteResponse } from '@/lib/tags';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/tags/[id]
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ tag });
   } catch (error) {
-    console.error('Tag GET error:', error);
+    logger.error('Tag GET error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -87,7 +88,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const response: TagUpdateResponse = { tag };
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Tag update error:', error);
+    logger.error('Tag update error', error instanceof Error ? error : undefined);
 
     // Handle specific errors
     if (error instanceof Error) {
@@ -134,7 +135,7 @@ export async function DELETE(
     const response: TagDeleteResponse = { success: true, tagId: id };
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Tag deletion error:', error);
+    logger.error('Tag deletion error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -7,6 +7,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getHabitStatistics } from '@/lib/habits';
+import { logger } from '@/lib/logger';
 
 export async function GET() {
   try {
@@ -20,7 +21,10 @@ export async function GET() {
 
     return NextResponse.json({ statistics });
   } catch (error) {
-    console.error('Error fetching habit statistics:', error);
+    logger.error(
+      'Error fetching habit statistics:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to fetch habit statistics' }, { status: 500 });
   }
 }

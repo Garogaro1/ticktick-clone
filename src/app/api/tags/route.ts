@@ -15,6 +15,7 @@ import {
   type TagCreateResponse,
 } from '@/lib/tags';
 import { Prisma } from '@prisma/client';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/tags
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Tags GET error:', error);
+    logger.error('Tags GET error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest) {
     const response: TagCreateResponse = { tag };
     return NextResponse.json(response, { status: 201 });
   } catch (error) {
-    console.error('Tag creation error:', error);
+    logger.error('Tag creation error', error instanceof Error ? error : undefined);
 
     // Handle specific errors
     if (error instanceof Error) {

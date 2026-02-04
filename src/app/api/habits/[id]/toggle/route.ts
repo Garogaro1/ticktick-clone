@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { toggleHabitEntry } from '@/lib/habits';
 import { toggleHabitEntrySchema } from '@/lib/habits/schemas';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -47,7 +48,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       habit: result.habit,
     });
   } catch (error) {
-    console.error('Error toggling habit:', error);
+    logger.error(
+      'Error toggling habit:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to toggle habit' }, { status: 500 });
   }
 }

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getHabitById, updateHabit, deleteHabit } from '@/lib/habits';
 import { updateHabitSchema } from '@/lib/habits/schemas';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -29,7 +30,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ habit });
   } catch (error) {
-    console.error('Error fetching habit:', error);
+    logger.error(
+      'Error fetching habit:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to fetch habit' }, { status: 500 });
   }
 }
@@ -62,7 +66,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ habit });
   } catch (error) {
-    console.error('Error updating habit:', error);
+    logger.error(
+      'Error updating habit:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to update habit' }, { status: 500 });
   }
 }
@@ -88,7 +95,10 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting habit:', error);
+    logger.error(
+      'Error deleting habit:',
+      error instanceof Error ? error : new Error(String(error))
+    );
     return NextResponse.json({ error: 'Failed to delete habit' }, { status: 500 });
   }
 }

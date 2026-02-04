@@ -13,6 +13,7 @@ import { updateGoalProgress } from '@/lib/goals';
 import { UpdateTaskSchema } from '@/lib/tasks/schemas';
 import { TaskStatus } from '@prisma/client';
 import type { TaskUpdateResponse, TaskDeleteResponse } from '@/lib/tasks';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/tasks/[id]
@@ -41,7 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ task });
   } catch (error) {
-    console.error('Task GET error:', error);
+    logger.error('Task GET error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -115,7 +116,10 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         });
       } catch (goalError) {
         // Log the error but don't fail the task update
-        console.error('Failed to update goal progress:', goalError);
+        logger.error(
+          'Failed to update goal progress',
+          goalError instanceof Error ? goalError : undefined
+        );
       }
     }
 
@@ -132,14 +136,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           increment: -1,
         });
       } catch (goalError) {
-        console.error('Failed to update goal progress:', goalError);
+        logger.error(
+          'Failed to update goal progress',
+          goalError instanceof Error ? goalError : undefined
+        );
       }
     }
 
     const response: TaskUpdateResponse = { task };
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Task update error:', error);
+    logger.error('Task update error', error instanceof Error ? error : undefined);
 
     // Handle specific Prisma errors
     if (error instanceof Error) {
@@ -183,7 +190,7 @@ export async function DELETE(
     const response: TaskDeleteResponse = { success: true, taskId: id };
     return NextResponse.json(response);
   } catch (error) {
-    console.error('Task deletion error:', error);
+    logger.error('Task deletion error', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

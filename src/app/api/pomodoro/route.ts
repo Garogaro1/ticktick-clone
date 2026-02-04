@@ -18,6 +18,7 @@ import {
   PomodoroQuerySchema,
   BatchPomodoroSchema,
 } from '@/lib/pomodoro/schemas';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching Pomodoro sessions:', error);
+    logger.error('Error fetching Pomodoro sessions', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to fetch Pomodoro sessions',
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ session: pomodoroSession }, { status: 201 });
   } catch (error) {
-    console.error('Error creating Pomodoro session:', error);
+    logger.error('Error creating Pomodoro session', error instanceof Error ? error : undefined);
 
     // Handle specific errors
     if (error instanceof Error) {

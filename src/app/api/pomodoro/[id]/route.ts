@@ -14,6 +14,7 @@ import {
   deletePomodoroSession,
 } from '@/lib/pomodoro/service';
 import { UpdatePomodoroSchema } from '@/lib/pomodoro/schemas';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ session: pomodoroSession });
   } catch (error) {
-    console.error('Error fetching Pomodoro session:', error);
+    logger.error('Error fetching Pomodoro session', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to fetch Pomodoro session',
@@ -64,7 +65,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ session: pomodoroSession });
   } catch (error) {
-    console.error('Error updating Pomodoro session:', error);
+    logger.error('Error updating Pomodoro session', error instanceof Error ? error : undefined);
 
     if (error instanceof Error && error.message === 'Pomodoro session not found') {
       return NextResponse.json({ error: error.message }, { status: 404 });
@@ -95,7 +96,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting Pomodoro session:', error);
+    logger.error('Error deleting Pomodoro session', error instanceof Error ? error : undefined);
 
     if (error instanceof Error && error.message === 'Pomodoro session not found') {
       return NextResponse.json({ error: error.message }, { status: 404 });

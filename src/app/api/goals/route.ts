@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getGoals, createGoal } from '@/lib/goals';
 import { createGoalSchema, goalQuerySchema } from '@/lib/goals/schemas';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching goals:', error);
+    logger.error('Error fetching goals', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Failed to fetch goals' }, { status: 500 });
   }
 }
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ goal }, { status: 201 });
   } catch (error) {
-    console.error('Error creating goal:', error);
+    logger.error('Error creating goal', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Failed to create goal' }, { status: 500 });
   }
 }

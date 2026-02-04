@@ -11,6 +11,7 @@ import { auth } from '@/lib/auth';
 import { getListById, updateList, deleteList } from '@/lib/lists/service';
 import { UpdateListSchema } from '@/lib/lists/schemas';
 import type { ListUpdateResponse, ListDeleteResponse } from '@/lib/lists';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/lists/[id]
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({ list });
   } catch (error) {
-    console.error('List GET error:', error);
+    logger.error('List GET error:', error instanceof Error ? error : new Error(String(error)));
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
@@ -91,7 +92,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const response: ListUpdateResponse = { list };
     return NextResponse.json(response);
   } catch (error) {
-    console.error('List update error:', error);
+    logger.error('List update error:', error instanceof Error ? error : new Error(String(error)));
 
     // Handle specific errors
     if (error instanceof Error) {
@@ -138,7 +139,7 @@ export async function DELETE(
     const response: ListDeleteResponse = { success: true, listId: id };
     return NextResponse.json(response);
   } catch (error) {
-    console.error('List deletion error:', error);
+    logger.error('List deletion error:', error instanceof Error ? error : new Error(String(error)));
 
     // Handle specific errors
     if (error instanceof Error) {

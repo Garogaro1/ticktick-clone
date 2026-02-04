@@ -13,6 +13,7 @@ import {
   ReminderQuerySchema,
   CreateRemindersSchema,
 } from '@/lib/reminders/schemas';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error('Error fetching reminders:', error);
+    logger.error('Error fetching reminders', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to fetch reminders',
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ reminder }, { status: 201 });
   } catch (error) {
-    console.error('Error creating reminder:', error);
+    logger.error('Error creating reminder', error instanceof Error ? error : undefined);
 
     // Handle specific errors
     if (error instanceof Error) {

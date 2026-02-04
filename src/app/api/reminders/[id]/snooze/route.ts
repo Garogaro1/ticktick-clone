@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { snoozeReminder } from '@/lib/reminders/service';
 import { SnoozeReminderSchema } from '@/lib/reminders/schemas';
+import { logger } from '@/lib/logger';
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ reminder });
   } catch (error) {
-    console.error('Error snoozing reminder:', error);
+    logger.error('Error snoozing reminder', error instanceof Error ? error : undefined);
 
     // Handle specific errors
     if (error instanceof Error) {

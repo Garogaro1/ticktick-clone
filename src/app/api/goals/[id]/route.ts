@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getGoalById, updateGoal, deleteGoal } from '@/lib/goals';
 import { updateGoalSchema } from '@/lib/goals/schemas';
+import { logger } from '@/lib/logger';
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ goal });
   } catch (error) {
-    console.error('Error fetching goal:', error);
+    logger.error('Error fetching goal', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Failed to fetch goal' }, { status: 500 });
   }
 }
@@ -66,7 +67,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ goal });
   } catch (error) {
-    console.error('Error updating goal:', error);
+    logger.error('Error updating goal', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Failed to update goal' }, { status: 500 });
   }
 }
@@ -89,7 +90,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting goal:', error);
+    logger.error('Error deleting goal', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Failed to delete goal' }, { status: 500 });
   }
 }

@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getReminderById, updateReminder, deleteReminder } from '@/lib/reminders/service';
 import { UpdateReminderSchema } from '@/lib/reminders/schemas';
+import { logger } from '@/lib/logger';
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ reminder });
   } catch (error) {
-    console.error('Error fetching reminder:', error);
+    logger.error('Error fetching reminder', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to fetch reminder',
@@ -68,7 +69,7 @@ export async function PUT(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ reminder });
   } catch (error) {
-    console.error('Error updating reminder:', error);
+    logger.error('Error updating reminder', error instanceof Error ? error : undefined);
 
     // Handle specific errors
     if (error instanceof Error) {
@@ -106,7 +107,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error deleting reminder:', error);
+    logger.error('Error deleting reminder', error instanceof Error ? error : undefined);
     return NextResponse.json(
       {
         error: 'Failed to delete reminder',

@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { batchUpdateGoalStatus, batchDeleteGoals, updateGoalOrders } from '@/lib/goals';
 import { batchUpdateGoalsSchema, batchDeleteGoalsSchema } from '@/lib/goals/schemas';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Error processing batch operation:', error);
+    logger.error('Error processing batch operation', error instanceof Error ? error : undefined);
     return NextResponse.json({ error: 'Failed to process batch operation' }, { status: 500 });
   }
 }
