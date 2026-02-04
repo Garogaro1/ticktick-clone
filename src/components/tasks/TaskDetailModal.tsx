@@ -7,8 +7,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TagPicker } from '@/components/tags';
 import { ReminderPicker, ReminderList } from '@/components/reminders';
+import { GoalPicker } from '@/components/goals';
 import { useTags } from '@/hooks/useTags';
 import { useTaskReminders } from '@/hooks/useReminders';
+import { useGoals } from '@/hooks/useGoals';
 import { cn } from '@/lib/utils';
 import type { TaskDto } from '@/lib/tasks/types';
 import type { TagDto } from '@/lib/tags/types';
@@ -45,6 +47,7 @@ const priorityOptions: { value: Priority; label: string; color: string }[] = [
  * - Status and priority selection
  * - Due date picker
  * - Description editing
+ * - Goal linking
  * - Delete confirmation
  * - Warm Claude theme styling
  */
@@ -63,10 +66,12 @@ export function TaskDetailModal({
   const [dueDate, setDueDate] = useState('');
   const [estimatedTime, setEstimatedTime] = useState('');
   const [selectedTagIds, setSelectedTagIds] = useState<string[]>([]);
+  const [selectedGoalId, setSelectedGoalId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   const { addTag, tags: allTags } = useTags({ autoFetch: true });
+  const { goals } = useGoals({ autoFetch: true });
   const {
     reminders,
     isLoading: remindersLoading,
@@ -87,6 +92,7 @@ export function TaskDetailModal({
       setDueDate(task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '');
       setEstimatedTime(task.estimatedTime ? String(task.estimatedTime) : '');
       setSelectedTagIds(task.tags?.map((tag) => tag.id) || []);
+      setSelectedGoalId(task.goalId || null);
     }
   }, [task]);
 
@@ -125,6 +131,7 @@ export function TaskDetailModal({
         dueDate: dueDate ? new Date(dueDate) : null,
         estimatedTime: estimatedTime ? parseInt(estimatedTime, 10) : null,
         tags: selectedTagObjects,
+        goalId: selectedGoalId,
       });
       onClose();
     } finally {
@@ -197,7 +204,8 @@ export function TaskDetailModal({
     priority !== task.priority ||
     dueDate !== (task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '') ||
     estimatedTime !== (task.estimatedTime ? String(task.estimatedTime) : '') ||
-    tagsChanged;
+    tagsChanged ||
+    selectedGoalId !== (task.goalId || null);
 
   return (
     <Modal
@@ -290,6 +298,17 @@ export function TaskDetailModal({
             placeholder="Add tags..."
             allowCreate
             onCreateTag={handleCreateTag}
+          />
+        </div>
+
+        {/* Goal */}
+        <div>
+          <label className="block text-sm font-medium text-text-secondary mb-2">Goal</label>
+          <GoalPicker
+            goals={goals}
+            selectedGoalId={selectedGoalId}
+            onChange={setSelectedGoalId}
+            placeholder="Link to a goal..."
           />
         </div>
 

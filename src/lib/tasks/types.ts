@@ -22,6 +22,19 @@ export interface TaskTagDto {
 }
 
 /**
+ * Goal DTO for task responses.
+ */
+export interface TaskGoalDto {
+  id: string;
+  title: string;
+  status: string;
+  progress?: number | null;
+  targetValue?: number | null;
+  currentValue?: number;
+  unit?: string | null;
+}
+
+/**
  * Task response DTO with selected fields.
  */
 export interface TaskDto {
@@ -43,6 +56,7 @@ export interface TaskDto {
   listId: string;
   parentId: string | null;
   goalId: string | null; // Phase 24: Goal relation
+  goal?: TaskGoalDto | null; // Phase 24: Full goal object
   tags: TaskTagDto[];
   reminders?: ReminderDto[]; // Optional reminders array
   subtasks?: TaskDto[];

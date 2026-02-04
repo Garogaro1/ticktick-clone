@@ -13,6 +13,7 @@ export interface UseTasksOptions {
     priority?: string;
     listId?: string;
     tagId?: string;
+    goalId?: string;
     search?: string;
     dueDate?: string;
     dueBefore?: string;
@@ -52,6 +53,7 @@ export function useTasks(options: UseTasksOptions = {}): UseTasksResult {
     if (filter.priority) params.set('priority', filter.priority);
     if (filter.listId) params.set('listId', filter.listId);
     if (filter.tagId) params.set('tagId', filter.tagId);
+    if (filter.goalId) params.set('goalId', filter.goalId);
     if (filter.search) params.set('search', filter.search);
     if (filter.dueDate) params.set('dueDate', filter.dueDate);
     if (filter.dueBefore) params.set('dueBefore', filter.dueBefore);

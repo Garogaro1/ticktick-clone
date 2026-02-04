@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useRef, useEffect, KeyboardEvent, MouseEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { TaskStatus, Priority } from '@prisma/client';
 import { cn } from '@/lib/utils';
 import { TagBadge } from '@/components/tags';
 import { ReminderBadge } from '@/components/reminders';
+import { GoalBadge } from '@/components/goals';
 import type { TaskDto } from '@/lib/tasks/types';
 
 export interface DragHandleProps {
@@ -42,6 +44,7 @@ const priorityConfig: Record<Priority, { color: string; label: string }> = {
  * - Inline title editing
  * - Priority indicator
  * - Due date display
+ * - Goal badge
  * - Status badge
  * - Quick actions
  * - Warm Claude theme styling
@@ -55,6 +58,7 @@ export function TaskItem({
   isLoading = false,
   className,
 }: TaskItemProps) {
+  const router = useRouter();
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(task.title);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -323,6 +327,17 @@ export function TaskItem({
             {/* Reminders badge */}
             {task.reminders && task.reminders.length > 0 && (
               <ReminderBadge reminders={task.reminders} />
+            )}
+
+            {/* Goal badge */}
+            {task.goal && (
+              <GoalBadge
+                goal={task.goal}
+                variant="compact"
+                onClick={() => {
+                  router.push(`/goals/${task.goal?.id ?? ''}`);
+                }}
+              />
             )}
           </div>
         )}

@@ -30,9 +30,29 @@ function normalizeDuration(value: number | string | null | undefined): number | 
 }
 
 /**
- * Convert Prisma Task model with tags to Task DTO.
+ * Extended task type with goal relation.
  */
-function toTaskDtoFromTags(task: TaskWithTags): TaskDto {
+type TaskWithGoal = TaskWithTags & {
+  goal: {
+    id: string;
+    title: string;
+    status: string;
+    targetValue: number | null;
+    currentValue: number;
+    unit: string | null;
+  } | null;
+};
+
+/**
+ * Convert Prisma Task model with tags and goal to Task DTO.
+ */
+function toTaskDtoWithGoal(task: TaskWithGoal): TaskDto {
+  // Calculate progress for goal if present
+  const goalProgress =
+    task.goal && task.goal.targetValue
+      ? Math.round((task.goal.currentValue / task.goal.targetValue) * 100)
+      : null;
+
   return {
     id: task.id,
     title: task.title,
@@ -51,7 +71,18 @@ function toTaskDtoFromTags(task: TaskWithTags): TaskDto {
     updatedAt: task.updatedAt,
     listId: task.listId,
     parentId: task.parentId,
-    goalId: task.goalId ?? null, // Phase 24: Include goalId
+    goalId: task.goalId ?? null,
+    goal: task.goal
+      ? {
+          id: task.goal.id,
+          title: task.goal.title,
+          status: task.goal.status,
+          progress: goalProgress,
+          targetValue: task.goal.targetValue,
+          currentValue: task.goal.currentValue,
+          unit: task.goal.unit,
+        }
+      : null,
     tags: task.tags.map((t) => ({
       id: t.tag.id,
       name: t.tag.name,
@@ -158,6 +189,16 @@ export async function getTasks(
           },
         },
       },
+      goal: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          targetValue: true,
+          currentValue: true,
+          unit: true,
+        },
+      },
       _count: {
         select: {
           subtasks: true,
@@ -184,7 +225,7 @@ export async function getTasks(
   });
 
   return {
-    tasks: tasks.map(toTaskDtoFromTags),
+    tasks: tasks.map(toTaskDtoWithGoal),
     total,
   };
 }
@@ -212,6 +253,16 @@ export async function getTaskById(taskId: string, userId: string): Promise<TaskD
               color: true,
             },
           },
+        },
+      },
+      goal: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          targetValue: true,
+          currentValue: true,
+          unit: true,
         },
       },
       list: {
@@ -272,6 +323,7 @@ export async function createTask(
     estimatedTime?: number | string | null;
     listId?: string;
     parentId?: string;
+    goalId?: string | null;
     sortOrder?: number;
     tags?: Array<{ id: string }>;
   }
@@ -339,6 +391,9 @@ export async function createTask(
   if (taskData.sortOrder !== undefined) {
     createData.sortOrder = taskData.sortOrder;
   }
+  if (taskData.goalId !== undefined) {
+    createData.goal = taskData.goalId ? { connect: { id: taskData.goalId } } : undefined;
+  }
   if (tags && tags.length > 0) {
     createData.tags = {
       create: tags.map((tag) => ({
@@ -360,6 +415,16 @@ export async function createTask(
               color: true,
             },
           },
+        },
+      },
+      goal: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          targetValue: true,
+          currentValue: true,
+          unit: true,
         },
       },
       list: {
@@ -410,6 +475,7 @@ export async function updateTask(
     recurrenceRule?: string | null;
     listId?: string | null;
     parentId?: string | null;
+    goalId?: string | null;
     sortOrder?: number;
     tags?: Array<{ id: string }>;
   }
@@ -462,6 +528,9 @@ export async function updateTask(
   }
   if (taskData.parentId !== undefined) {
     updateData.parent = taskData.parentId ? { connect: { id: taskData.parentId } } : undefined;
+  }
+  if (taskData.goalId !== undefined) {
+    updateData.goal = taskData.goalId ? { connect: { id: taskData.goalId } } : { disconnect: true };
   }
   if (taskData.sortOrder !== undefined) {
     updateData.sortOrder = taskData.sortOrder;
@@ -579,6 +648,16 @@ export async function batchUpdateTasks(
           },
         },
       },
+      goal: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          targetValue: true,
+          currentValue: true,
+          unit: true,
+        },
+      },
       _count: {
         select: {
           subtasks: true,
@@ -589,7 +668,7 @@ export async function batchUpdateTasks(
 
   return {
     count: result.count,
-    tasks: tasks.map(toTaskDtoFromTags),
+    tasks: tasks.map(toTaskDtoWithGoal),
   };
 }
 
@@ -669,6 +748,16 @@ export async function reorderTasks(
           },
         },
       },
+      goal: {
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          targetValue: true,
+          currentValue: true,
+          unit: true,
+        },
+      },
       _count: {
         select: {
           subtasks: true,
@@ -677,7 +766,7 @@ export async function reorderTasks(
     },
   });
 
-  return updatedTasks.map(toTaskDtoFromTags);
+  return updatedTasks.map(toTaskDtoWithGoal);
 }
 
 /**

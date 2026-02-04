@@ -9,7 +9,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getTaskById, updateTask, deleteTask } from '@/lib/tasks/service';
+import { updateGoalProgress } from '@/lib/goals';
 import { UpdateTaskSchema } from '@/lib/tasks/schemas';
+import { TaskStatus } from '@prisma/client';
 import type { TaskUpdateResponse, TaskDeleteResponse } from '@/lib/tasks';
 
 /**
@@ -78,6 +80,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const { id } = await params;
 
+    // Get the current task to check if it's linked to a goal and if status is changing
+    const currentTask = await getTaskById(id, session.user.id);
+
     // Parse and validate request body
     const body = await request.json();
     const validation = UpdateTaskSchema.safeParse(body);
@@ -88,11 +93,47 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const data = validation.data;
 
+    // Check if task is being marked as DONE and has a linked goal
+    const isCompletingTask =
+      data.status === TaskStatus.DONE &&
+      currentTask &&
+      currentTask.status !== TaskStatus.DONE &&
+      currentTask.goalId;
+
     // Update task
     const task = await updateTask(id, session.user.id, data);
 
     if (!task) {
       return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+    }
+
+    // Auto-update goal progress when task is completed
+    if (isCompletingTask && currentTask.goalId) {
+      try {
+        await updateGoalProgress(session.user.id, currentTask.goalId, {
+          increment: 1,
+        });
+      } catch (goalError) {
+        // Log the error but don't fail the task update
+        console.error('Failed to update goal progress:', goalError);
+      }
+    }
+
+    // If task is being uncompleted (status changed from DONE to something else), decrement goal progress
+    if (
+      data.status &&
+      data.status !== TaskStatus.DONE &&
+      currentTask &&
+      currentTask.status === TaskStatus.DONE &&
+      currentTask.goalId
+    ) {
+      try {
+        await updateGoalProgress(session.user.id, currentTask.goalId, {
+          increment: -1,
+        });
+      } catch (goalError) {
+        console.error('Failed to update goal progress:', goalError);
+      }
     }
 
     const response: TaskUpdateResponse = { task };
