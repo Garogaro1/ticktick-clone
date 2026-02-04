@@ -51,6 +51,7 @@ function toTaskDtoFromTags(task: TaskWithTags): TaskDto {
     updatedAt: task.updatedAt,
     listId: task.listId,
     parentId: task.parentId,
+    goalId: task.goalId ?? null, // Phase 24: Include goalId
     tags: task.tags.map((t) => ({
       id: t.tag.id,
       name: t.tag.name,
@@ -82,6 +83,7 @@ export function toTaskDto(task: TaskWithFullRelations): TaskDto {
     updatedAt: task.updatedAt,
     listId: task.listId,
     parentId: task.parentId,
+    goalId: task.goalId ?? null, // Phase 24: Include goalId
     tags: task.tags.map((t) => ({
       id: t.tag.id,
       name: t.tag.name,
@@ -105,6 +107,7 @@ export function toTaskDto(task: TaskWithFullRelations): TaskDto {
       updatedAt: subtask.updatedAt,
       listId: subtask.listId,
       parentId: subtask.parentId,
+      goalId: subtask.goalId ?? null, // Phase 24: Include goalId
       tags: subtask.tags.map((t) => ({
         id: t.tag.id,
         name: t.tag.name,

@@ -42,6 +42,7 @@ export interface TaskDto {
   updatedAt: Date;
   listId: string;
   parentId: string | null;
+  goalId: string | null; // Phase 24: Goal relation
   tags: TaskTagDto[];
   reminders?: ReminderDto[]; // Optional reminders array
   subtasks?: TaskDto[];
@@ -126,6 +127,7 @@ export interface TaskErrorResponse {
  * Task with tags relation (from Prisma include).
  */
 export type TaskWithTags = Task & {
+  goalId?: string | null; // Phase 24: goal relation
   tags: Array<{
     tag: {
       id: string;
@@ -142,6 +144,7 @@ export type TaskWithTags = Task & {
  * Task with full relations (from Prisma include).
  */
 export type TaskWithFullRelations = Task & {
+  goalId?: string | null; // Phase 24: goal relation
   tags: Array<{
     tag: {
       id: string;
@@ -167,6 +170,7 @@ export type TaskWithFullRelations = Task & {
           color: string | null;
         };
       }>;
+      goalId?: string | null;
     } & Task
   >;
   _count?: {

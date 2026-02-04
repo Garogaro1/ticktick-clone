@@ -124,12 +124,17 @@ model Task {
   tags TaskTag[]
   reminders Reminder[]
 
+  // Goal relation (Phase 24)
+  goalId String?
+  goal   Goal?  @relation(fields: [goalId], references: [id], onDelete: SetNull)
+
   @@index([userId])
   @@index([listId])
   @@index([userId, status])
   @@index([userId, dueDate])
   @@index([userId, priority])
   @@index([parentId])
+  @@index([goalId])
   @@map("tasks")
 }
 
@@ -208,6 +213,9 @@ model Goal {
   // Relations
   userId String
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Tasks relation (Phase 24) - tasks linked to this goal
+  tasks Task[]
 
   @@index([userId])
   @@index([userId, status])

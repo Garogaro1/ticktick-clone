@@ -83,6 +83,7 @@ function convertTaskDtoToCalendarTask(task: TaskDto) {
     ...task,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     userId: 'placeholder-user-id' as any, // Add userId for type compatibility
+    goalId: task.goalId ?? null, // Phase 24: Add goalId for type compatibility
     dueDate: task.dueDate ? new Date(task.dueDate) : null,
     startDate: task.startDate ? new Date(task.startDate) : null,
     completedAt: task.completedAt ? new Date(task.completedAt) : null,

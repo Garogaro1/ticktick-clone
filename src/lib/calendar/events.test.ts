@@ -19,6 +19,7 @@ import { TaskStatus, Priority } from '@prisma/client';
 // Type for mock task with additional properties
 type MockTask = Task & {
   list?: { color: string | null } | null;
+  goalId?: string | null;
   tags: Array<{
     tag: {
       id: string;
@@ -48,6 +49,7 @@ const createMockTask = (overrides: Partial<MockTask> = {}): MockTask => ({
   updatedAt: new Date('2024-01-01'),
   listId: 'list1',
   parentId: null,
+  goalId: null,
   tags: [],
   list: { color: '#D97757' },
   ...overrides,

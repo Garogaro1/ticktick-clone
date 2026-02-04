@@ -75,6 +75,7 @@ describe('Task Service', () => {
     listId: mockListId,
     parentId: null,
     userId: mockUserId,
+    goalId: null,
     tags: [],
     subtasks: [],
     _count: { subtasks: 0 },
