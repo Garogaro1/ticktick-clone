@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * SkipLink Component
  *
