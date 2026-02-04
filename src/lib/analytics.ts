@@ -3,9 +3,15 @@
  *
  * This module provides a feature-flagged analytics system that:
  * - Respects the analytics feature flag from env.features.analytics
- * - Logs to console in development (for debugging)
- * - Provides a placeholder implementation for production analytics
- * - Easy to integrate with real analytics providers (Google Analytics, Plausible, etc.)
+ * - Integrates with real analytics providers (Google Analytics, Plausible, Umami, PostHog)
+ * - Logs to console in development when debug mode is enabled
+ *
+ * Configure via NEXT_PUBLIC_ANALYTICS_PROVIDER environment variable:
+ * - 'google' - Google Analytics 4 (requires NEXT_PUBLIC_GA_MEASUREMENT_ID)
+ * - 'plausible' - Plausible Analytics (requires NEXT_PUBLIC_PLAUSIBLE_DOMAIN)
+ * - 'umami' - Umami Analytics (requires NEXT_PUBLIC_UMAMI_WEBSITE_ID)
+ * - 'posthog' - PostHog (requires NEXT_PUBLIC_POSTHOG_KEY)
+ * - 'none' or unset - No analytics
  *
  * @example
  * import { trackPageView, trackEvent } from '@/lib/analytics';
@@ -15,21 +21,17 @@
  */
 
 import { env } from './env';
+import {
+  trackPageView as trackPageViewProvider,
+  trackEvent as trackEventProvider,
+  initAnalytics,
+} from './analytics-providers';
 
 /**
  * Event properties type for analytics events.
  * Can be any record of string keys to unknown values.
  */
 export type EventProperties = Record<string, unknown>;
-
-/**
- * Checks if analytics is enabled via feature flag.
- *
- * @returns true if analytics is enabled
- */
-function isAnalyticsEnabled(): boolean {
-  return env.features.analytics;
-}
 
 /**
  * Logs analytics call in development mode for debugging.
@@ -44,10 +46,7 @@ function debugLog(type: string, data: unknown): void {
 }
 
 /**
- * Tracks a page view.
- *
- * In development: logs to console if debug mode is enabled
- * In production: placeholder for real analytics integration
+ * Tracks a page view with debug logging.
  *
  * @param path - The page path to track (e.g., '/tasks', '/projects/123')
  *
@@ -56,31 +55,21 @@ function debugLog(type: string, data: unknown): void {
  * trackPageView('/projects/' + projectId);
  */
 export function trackPageView(path: string): void {
-  if (!isAnalyticsEnabled()) {
+  if (!env.features.analytics) {
     return;
   }
 
   const pageViewData = {
     path,
     timestamp: new Date().toISOString(),
-    // Add more metadata as needed (referrer, userAgent, etc.)
   };
 
-  // Development: console logging
   debugLog('PageView', pageViewData);
-
-  // Production: TODO - Integrate with real analytics provider
-  // Examples:
-  // - Google Analytics: gtag('event', 'page_view', { page_path: path })
-  // - Plausible: plausible('pageview', { u: path })
-  // - Umami: umami.trackPageView(path)
+  trackPageViewProvider(path);
 }
 
 /**
- * Tracks a custom analytics event.
- *
- * In development: logs to console if debug mode is enabled
- * In production: placeholder for real analytics integration
+ * Tracks a custom analytics event with debug logging.
  *
  * @param name - The event name (e.g., 'task_completed', 'project_created')
  * @param properties - Optional event properties (metadata about the event)
@@ -91,7 +80,7 @@ export function trackPageView(path: string): void {
  * trackEvent('filter_applied', { filterType: 'priority', value: 'high' });
  */
 export function trackEvent(name: string, properties?: EventProperties): void {
-  if (!isAnalyticsEnabled()) {
+  if (!env.features.analytics) {
     return;
   }
 
@@ -101,14 +90,8 @@ export function trackEvent(name: string, properties?: EventProperties): void {
     timestamp: new Date().toISOString(),
   };
 
-  // Development: console logging
   debugLog('Event', eventData);
-
-  // Production: TODO - Integrate with real analytics provider
-  // Examples:
-  // - Google Analytics: gtag('event', name, properties)
-  // - Plausible: plausible(name, { props: properties })
-  // - Umami: umami.track(name, properties)
+  trackEventProvider(name, properties);
 }
 
 /**
@@ -150,3 +133,14 @@ export function trackError(error: Error | string, context?: string): void {
     stack: errorStack,
   });
 }
+
+/**
+ * Initialize analytics. Call this once on app mount.
+ * Re-exported from analytics-providers for convenience.
+ */
+export { initAnalytics };
+
+/**
+ * Re-export types from analytics-providers.
+ */
+export type { AnalyticsProvider } from './analytics-providers';
