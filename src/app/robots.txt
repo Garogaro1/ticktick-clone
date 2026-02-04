@@ -1,0 +1,14 @@
+# See https://www.robotstxt.org/robotstxt.html for more info
+
+User-agent: *
+Allow: /
+
+# Disallow API routes
+Disallow: /api/
+
+# Disallow authentication routes
+Disallow: /login
+Disallow: /register
+
+# Sitemap location
+Sitemap: https://ticktick-clone.com/sitemap.xml

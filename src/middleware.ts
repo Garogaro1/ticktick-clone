@@ -27,6 +27,19 @@ const publicRoutes = new Set(['/login', '/register', '/api/auth']);
 const authRoutes = new Set(['/login', '/register']);
 
 /**
+ * Security headers for all responses.
+ */
+const securityHeaders: Record<string, string> = {
+  'X-DNS-Prefetch-Control': 'on',
+  'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'X-Content-Type-Options': 'nosniff',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+};
+
+/**
  * Middleware function to protect routes.
  *
  * Checks if the user is authenticated and redirects accordingly:
@@ -38,7 +51,12 @@ export async function middleware(request: NextRequest) {
 
   // Skip middleware for API routes (except auth API)
   if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth')) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    // Add security headers to API responses
+    Object.entries(securityHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   }
 
   // Get session
@@ -66,7 +84,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  return NextResponse.next();
+  // Create response and add security headers
+  const response = NextResponse.next();
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+
+  return response;
 }
 
 /**
