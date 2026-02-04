@@ -182,6 +182,31 @@ export function addDays(date: Date, days: number): Date {
 export function addWeeks(date: Date, weeks: number): Date {
   return addDays(date, weeks * 7);
 }
+/**
+ * Subtract days from a date.
+ *
+ * @param date - Date to subtract days from
+ * @param days - Number of days to subtract
+ * @returns New Date with days subtracted
+ */
+export function subDays(date: Date, days: number): Date {
+  return addDays(date, -days);
+}
+
+/**
+ * Calculate the difference in days between two dates.
+ *
+ * @param dateLeft - The later date
+ * @param dateRight - The earlier date
+ * @returns Number of days between the dates (rounded)
+ */
+export function differenceInDays(dateLeft: Date, dateRight: Date): number {
+  const left = startOfDay(dateLeft);
+  const right = startOfDay(dateRight);
+
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.round((left.getTime() - right.getTime()) / msPerDay);
+}
 
 // ========================
 // Calendar-Specific Utilities
@@ -654,4 +679,74 @@ export function getTimeString(date: Date): string {
  */
 export function getTimeStringWithSeconds(date: Date): string {
   return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}:${date.getSeconds().toString().padStart(2, '0')}`;
+}
+
+/**
+ * Format a date using Intl.DateTimeFormat patterns.
+ *
+ * @param date - Date to format
+ * @param formatStr - Format string (full, long, medium, short)
+ * @returns Formatted date string
+ */
+export function format(date: Date, formatStr: string = 'yyyy-MM-dd'): string {
+  const patterns: Record<string, string> = {
+    'yyyy-MM-dd': new Intl.DateTimeFormat('en-CA', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(date),
+    'MMM dd, yyyy': formatDateFull(date),
+    'MMM d': formatDateShort(date),
+    MMMM: new Intl.DateTimeFormat('en-US', { month: 'long' }).format(date),
+    MMM: new Intl.DateTimeFormat('en-US', { month: 'short' }).format(date),
+    E: formatWeekday(date),
+  };
+
+  return patterns[formatStr] || formatStr;
+}
+
+/**
+ * Subtract months from a date.
+ *
+ * @param date - Date to subtract months from
+ * @param months - Number of months to subtract
+ * @returns New Date with months subtracted
+ */
+export function subMonths(date: Date, months: number): Date {
+  return addMonths(date, -months);
+}
+
+/**
+ * Get all days in an interval (inclusive).
+ *
+ * @param start - Start date
+ * @param end - End date
+ * @returns Array of dates in the interval
+ */
+export function eachDayOfInterval(interval: { start: Date; end: Date }): Date[] {
+  const start = startOfDay(interval.start);
+  const end = startOfDay(interval.end);
+  const dates: Date[] = [];
+
+  let current = new Date(start);
+  while (current <= end) {
+    dates.push(new Date(current));
+    current = addDays(current, 1);
+  }
+
+  return dates;
+}
+
+/**
+ * Check if a date is within an interval (inclusive).
+ *
+ * @param date - Date to check
+ * @param interval - Interval with start and end dates
+ * @returns True if date is within the interval
+ */
+export function isWithinInterval(date: Date, interval: { start: Date; end: Date }): boolean {
+  const d = startOfDay(date);
+  const start = startOfDay(interval.start);
+  const end = endOfDay(interval.end);
+  return d >= start && d <= end;
 }

@@ -271,6 +271,20 @@ export const NavIcons = {
       <polyline points="12 6 12 12 16 14" />
     </svg>
   ),
+  habits: (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 8v4" />
+      <path d="M12 16h.01" />
+    </svg>
+  ),
   profile: (
     <svg
       width="24"
@@ -320,6 +334,7 @@ export function getDefaultNavItems(): NavItem[] {
     { href: '/tasks', label: 'Tasks', icon: NavIcons.tasks },
     { href: '/calendar', label: 'Calendar', icon: NavIcons.calendar },
     { href: '/pomodoro', label: 'Timer', icon: NavIcons.pomodoro },
+    { href: '/habits', label: 'Habits', icon: NavIcons.habits },
     { href: '/kanban', label: 'Kanban', icon: NavIcons.kanban },
     { href: '/eisenhower', label: 'Matrix', icon: NavIcons.eisenhower },
   ];
