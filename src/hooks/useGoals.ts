@@ -14,6 +14,7 @@ import type {
   GoalListFilters,
   GoalStatistics,
 } from '@/lib/goals';
+import { logger } from '@/lib/logger';
 
 const GOALS_CACHE_KEY = 'goals-cache';
 const GOALS_VIEW_KEY = 'goal-view';
@@ -164,7 +165,7 @@ export function useGoals(options: UseGoalsOptions = {}): UseGoalsResult {
       const data = await response.json();
       setStatistics(data.statistics || null);
     } catch (err) {
-      console.error('Failed to fetch statistics:', err);
+      logger.error('Failed to fetch statistics', err instanceof Error ? err : undefined);
     } finally {
       setIsStatisticsLoading(false);
     }

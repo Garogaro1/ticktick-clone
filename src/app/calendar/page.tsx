@@ -18,6 +18,7 @@ import { MobileNav, getDefaultNavItems } from '@/components/mobile';
 import type { CalendarEvent } from '@/lib/calendar/types';
 import type { TaskDto } from '@/lib/tasks/types';
 import { formatDateFull } from '@/lib/utils/date';
+import { logger } from '@/lib/logger';
 
 /**
  * Calendar Page - Multi-view calendar with task display.
@@ -149,7 +150,7 @@ export default function CalendarPage() {
         clearSelection();
       }
     } catch (err) {
-      console.error('Failed to add task:', err);
+      logger.error('Failed to add task', err instanceof Error ? err : undefined);
     } finally {
       setIsAdding(false);
     }

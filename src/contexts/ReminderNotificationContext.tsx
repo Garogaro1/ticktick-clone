@@ -11,6 +11,7 @@ import { createContext, useContext, useState, useEffect, useCallback, ReactNode 
 import { useSession } from 'next-auth/react';
 import { ReminderDto } from '@/lib/reminders';
 import { ReminderToastContainer } from '@/components/reminders';
+import { logger } from '@/lib/logger';
 
 interface NotificationToast {
   reminder: ReminderDto;
@@ -99,7 +100,7 @@ export function ReminderNotificationProvider({ children }: { children: ReactNode
         setActiveToasts((prev) => prev.filter((t) => t.reminder.id !== reminderId));
       }
     } catch (error) {
-      console.error('Failed to snooze reminder:', error);
+      logger.error('Failed to snooze reminder', error instanceof Error ? error : undefined);
     }
   }, []);
 
@@ -197,7 +198,7 @@ export function ReminderNotificationProvider({ children }: { children: ReactNode
           }
         }
       } catch (error) {
-        console.error('Failed to check for reminders:', error);
+        logger.error('Failed to check for reminders', error instanceof Error ? error : undefined);
       }
     };
 

@@ -11,6 +11,8 @@
  * console.log(env.NEXT_PUBLIC_APP_URL);
  */
 
+import { logger } from '@/lib/logger';
+
 /**
  * Validates that a required environment variable is present.
  * Throws an error with a helpful message if missing.
@@ -102,7 +104,7 @@ export function validateEnvVars(): boolean {
     return true;
   } catch (error) {
     if (error instanceof Error) {
-      console.error('Environment validation failed:', error.message);
+      logger.error('Environment validation failed', error);
     }
     throw error;
   }

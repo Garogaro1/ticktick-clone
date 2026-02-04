@@ -9,6 +9,7 @@ import type {
   PomodoroStatistics,
 } from '@/lib/pomodoro/types';
 import { formatTime, minutesToSeconds, calculateProgress } from '@/lib/pomodoro/utils';
+import { logger } from '@/lib/logger';
 
 const TIMER_STORAGE_KEY = 'pomodoro-timer';
 const SETTINGS_STORAGE_KEY = 'pomodoro-settings';
@@ -190,7 +191,7 @@ export function usePomodoro(options: UsePomodoroOptions = {}): UsePomodoroResult
           showBrowserNotification(state.type);
         }
       } catch (error) {
-        console.error('Failed to complete session:', error);
+        logger.error('Failed to complete session', error instanceof Error ? error : undefined);
       }
     },
     [onSessionComplete]
@@ -303,7 +304,7 @@ export function usePomodoro(options: UsePomodoroOptions = {}): UsePomodoroResult
         // Refresh sessions list
         refreshSessions();
       } catch (error) {
-        console.error('Failed to start timer:', error);
+        logger.error('Failed to start timer', error instanceof Error ? error : undefined);
       }
     },
     [settings.workDuration, persistTimerState, startInterval, requestNotificationPermission]
@@ -381,7 +382,7 @@ export function usePomodoro(options: UsePomodoroOptions = {}): UsePomodoroResult
           body: JSON.stringify({ wasCompleted }),
         });
       } catch (error) {
-        console.error('Failed to stop session:', error);
+        logger.error('Failed to stop session', error instanceof Error ? error : undefined);
       }
 
       // Reset state
@@ -434,7 +435,7 @@ export function usePomodoro(options: UsePomodoroOptions = {}): UsePomodoroResult
         setStatistics(data.statistics);
       }
     } catch (error) {
-      console.error('Failed to fetch statistics:', error);
+      logger.error('Failed to fetch statistics', error instanceof Error ? error : undefined);
     } finally {
       setStatisticsLoading(false);
     }
@@ -450,7 +451,7 @@ export function usePomodoro(options: UsePomodoroOptions = {}): UsePomodoroResult
         setSessions(data.sessions || []);
       }
     } catch (error) {
-      console.error('Failed to fetch sessions:', error);
+      logger.error('Failed to fetch sessions', error instanceof Error ? error : undefined);
     } finally {
       setSessionsLoading(false);
     }

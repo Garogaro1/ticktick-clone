@@ -10,6 +10,7 @@ import type { NextAuthConfig } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { db } from '@/lib/db';
 import { verifyPassword } from './password';
+import { logger } from '@/lib/logger';
 import type { User } from '@prisma/client';
 
 /**
@@ -122,7 +123,42 @@ const config: NextAuthConfig = {
 /**
  * Export configured auth instance for API routes.
  */
-export const { auth, signIn, signOut, handlers } = NextAuth(config);
+export const { auth: _auth, signIn, signOut, handlers } = NextAuth(config);
+
+/**
+ * Wrapper around auth() that returns demo user if no session.
+ * This allows the app to work without login.
+ */
+export async function auth() {
+  try {
+    const session = await _auth();
+
+    // If session exists, return it
+    if (session?.user) {
+      return session;
+    }
+
+    // Otherwise, return demo user
+    const demoUser = await db.user.findUnique({
+      where: { email: 'demo@example.com' },
+    });
+
+    if (!demoUser) {
+      throw new Error('Demo user not found. Run: npm run prisma:seed');
+    }
+
+    const sanitized = sanitizeUser(demoUser);
+
+    // Return session-like object with demo user
+    return {
+      user: sanitized,
+      expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+  } catch (error) {
+    logger.error('Auth error', error instanceof Error ? error : undefined);
+    throw error;
+  }
+}
 
 /**
  * Get the current server session.

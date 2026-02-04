@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import type { SortBy, SortOrder } from './useTasks';
+import { logger } from '@/lib/logger';
 
 const SORT_PREFERENCES_KEY = 'ticktick:sortPreferences';
 
@@ -51,7 +52,7 @@ export function useSortPreferences() {
         });
       }
     } catch (error) {
-      console.error('Failed to load sort preferences:', error);
+      logger.error('Failed to load sort preferences', error instanceof Error ? error : undefined);
     } finally {
       setIsLoaded(true);
     }
@@ -65,7 +66,7 @@ export function useSortPreferences() {
     try {
       localStorage.setItem(SORT_PREFERENCES_KEY, JSON.stringify(newPreferences));
     } catch (error) {
-      console.error('Failed to save sort preferences:', error);
+      logger.error('Failed to save sort preferences', error instanceof Error ? error : undefined);
     }
   }, []);
 
@@ -75,7 +76,7 @@ export function useSortPreferences() {
     try {
       localStorage.removeItem(SORT_PREFERENCES_KEY);
     } catch (error) {
-      console.error('Failed to clear sort preferences:', error);
+      logger.error('Failed to clear sort preferences', error instanceof Error ? error : undefined);
     }
   }, []);
 

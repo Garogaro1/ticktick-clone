@@ -58,3 +58,4 @@ prisma/migrations/*/migration.sql
 
 # OS
 Thumbs.db
+dev.log

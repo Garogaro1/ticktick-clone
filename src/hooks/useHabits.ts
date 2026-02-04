@@ -15,6 +15,7 @@ import type {
   HabitStatistics,
 } from '@/lib/habits';
 import { getRandomHabitColor } from '@/lib/habits/utils';
+import { logger } from '@/lib/logger';
 
 const HABITS_CACHE_KEY = 'habits-cache';
 const HABIT_VIEW_KEY = 'habit-view';
@@ -158,7 +159,7 @@ export function useHabits(options: UseHabitsOptions = {}): UseHabitsResult {
       const data = await response.json();
       setStatistics(data.statistics || null);
     } catch (err) {
-      console.error('Failed to fetch statistics:', err);
+      logger.error('Failed to fetch statistics', err instanceof Error ? err : undefined);
     } finally {
       setIsStatisticsLoading(false);
     }
